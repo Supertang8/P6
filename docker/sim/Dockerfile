@@ -18,6 +18,7 @@ RUN apt update && apt install -y \
     ros-humble-robot-state-publisher \
     ros-humble-rviz2 \
     xterm \
+    ros-humble-teleop-twist-keyboard \
     && rm -rf /var/lib/apt/lists/*
 
 # Initialize rosdep
