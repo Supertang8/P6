@@ -1,0 +1,15 @@
+
+services:
+  drone:
+    build: .
+    network_mode: host
+    environment:
+      - DISPLAY=${DISPLAY}
+      - QT_X11_NO_MITSHM=1
+    volumes:
+      - ./ros2_ws:/root/ros2_ws
+      - type: bind
+        source: ./../../ros2_ws
+        target: /root/ros2_ws
+    stdin_open: true
+    tty: true
