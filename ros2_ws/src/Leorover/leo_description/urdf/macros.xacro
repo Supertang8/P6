@@ -165,24 +165,46 @@
     <link name="${link_prefix}lidar_link">
       <inertial>
         <mass value="0.8"/>
-        <origin xyz="0 0 0"/>
+        <origin xyz="0 0 0.2" rpy="0 0 0"/>
         <inertia ixx="0.001" ixy="0" ixz="0"
                 iyy="0.001" iyz="0"
                 izz="0.001"/>
       </inertial>
 
+      <!-- Box -->
       <visual>
+        <origin xyz="0 0 0.0" rpy="0 0.17 0"/>
         <geometry>
-          <cylinder radius="0.05" length="0.08"/>
+          <box size="0.06 0.06 0.03"/>
+        </geometry>
+        <material name="grey">
+          <color rgba="0.5 0.5 0.5 1"/>
+        </material>
+      </visual>
+
+      <collision>
+        <origin xyz="0 0 0.0" rpy="0 0.3 0"/>
+        <geometry>
+          <box size="0.06 0.06 0.03"/>
+        </geometry>
+      </collision>
+
+      <!-- Half-sphere (fake using full sphere offset down) -->
+      <visual>
+        <origin xyz="0 0 -0.01"/>
+        <geometry>
+          <sphere radius="0.02"/>
         </geometry>
         <material name="black"/>
       </visual>
 
       <collision>
+        <origin xyz="0 0 -0.01"/>
         <geometry>
-          <cylinder radius="0.05" length="0.08"/>
+          <sphere radius="0.02"/>
         </geometry>
       </collision>
+
     </link>
 
     <link name="${link_prefix}camera_frame"/>
@@ -308,7 +330,7 @@
     </joint>
 
     <joint name="${joint_prefix}lidar_joint" type="fixed">
-      <origin xyz="0.1 0 0.12" rpy="0 0 0"/>
+      <origin xyz="0.0 0 0.2" rpy="0 0 0"/>
       <parent link="${link_prefix}base_link"/>
       <child link="${link_prefix}lidar_link"/>
     </joint>

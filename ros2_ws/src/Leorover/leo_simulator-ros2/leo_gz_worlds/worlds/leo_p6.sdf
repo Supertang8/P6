@@ -34,24 +34,6 @@
       </attenuation>
       <direction>-0.5 0.1 -0.9</direction>
     </light>
-    
-    <!-- Additional light for better shadows -->
-    <light name="spot_light" type="spot">
-      <pose>2 2 5 0 0 0</pose>
-      <diffuse>1 1 1 1</diffuse>
-      <specular>0.5 0.5 0.5 1</specular>
-      <attenuation>
-        <range>20</range>
-        <constant>0.8</constant>
-        <linear>0.01</linear>
-        <quadratic>0.001</quadratic>
-      </attenuation>
-      <spot>
-        <inner_angle>0.5</inner_angle>
-        <outer_angle>1.0</outer_angle>
-        <falloff>0.5</falloff>
-      </spot>
-    </light>
 
     <!-- Ground plane -->
     <model name="ground_plane">
@@ -85,36 +67,132 @@
             </plane>
           </geometry>
           <material>
-            <ambient>0.8 0.8 0.8 1</ambient>
-            <diffuse>0.8 0.8 0.8 1</diffuse>
-            <specular>0.8 0.8 0.8 1</specular>
+            <ambient>0.15 0.45 0.15 1</ambient>
+            <diffuse>0.25 0.65 0.25 1</diffuse>
+            <specular>0.05 0.05 0.05 1</specular>
           </material>
         </visual>
       </link>
     </model>
 
-    <!-- Box obstacle -->
-    <model name="box_obstacle">
-      <pose>2 0 0.5 0 0 0</pose> <!-- x y z roll pitch yaw -->
-      <link name="link">
-        <collision name="collision">
-          <geometry>
-            <box>
-              <size>1 1 1</size>
-            </box>
-          </geometry>
-        </collision>
+
+    <!-- Rock 1 -->
+    <model name="rock1">
+      <static>true</static>
+      <pose>1 0 0.1 0 0 0</pose>
+      <link name="rock1_link">
         <visual name="visual">
           <geometry>
-            <box>
-              <size>1 1 1</size>
-            </box>
+            <mesh>
+              <uri>../models/Obstacles/FallingRock01.dae</uri>
+              <scale>0.8 0.8 0.8</scale>
+            </mesh>
           </geometry>
-          <material>
-            <ambient>1 0 0 1</ambient>
-            <diffuse>1 0 0 1</diffuse>
-          </material>
         </visual>
+        <collision name="collision">
+          <geometry>
+            <mesh>
+              <uri>../models/Obstacles/FallingRock01_Collider.dae</uri>
+              <scale>0.8 0.8 0.8</scale>
+            </mesh>
+          </geometry>
+        </collision>
+      </link>
+    </model>
+
+        <!-- Rock 2 -->
+    <model name="rock2">
+      <static>true</static>
+      <pose>0.9 1.8 0.1 0 0 0</pose>
+      <link name="rock1_link">
+        <visual name="visual">
+          <geometry>
+            <mesh>
+              <uri>../models/Obstacles/FallingRock01.dae</uri>
+              <scale>0.8 0.8 0.8</scale>
+            </mesh>
+          </geometry>
+        </visual>
+        <collision name="collision">
+          <geometry>
+            <mesh>
+              <uri>../models/Obstacles/FallingRock01_Collider.dae</uri>
+              <scale>0.8 0.8 0.8</scale>
+            </mesh>
+          </geometry>
+        </collision>
+      </link>
+    </model>
+
+        <!-- Rock 3 -->
+    <model name="rock3">
+      <static>true</static>
+      <pose>3.0 3 0.1 0 0 0</pose>
+      <link name="rock1_link">
+        <visual name="visual">
+          <geometry>
+            <mesh>
+              <uri>../models/Obstacles/FallingRock01.dae</uri>
+              <scale>0.8 0.8 0.8</scale>
+            </mesh>
+          </geometry>
+        </visual>
+        <collision name="collision">
+          <geometry>
+            <mesh>
+              <uri>../models/Obstacles/FallingRock01_Collider.dae</uri>
+              <scale>0.8 0.8 0.8</scale>
+            </mesh>
+          </geometry>
+        </collision>
+      </link>
+    </model>
+
+        <!-- Rock 4 -->
+    <model name="rock4">
+      <static>true</static>
+      <pose>3.0 -2.0 0.1 0 0 0</pose>
+      <link name="rock1_link">
+        <visual name="visual">
+          <geometry>
+            <mesh>
+              <uri>../models/Obstacles/FallingRock01.dae</uri>
+              <scale>0.8 0.8 0.8</scale>
+            </mesh>
+          </geometry>
+        </visual>
+        <collision name="collision">
+          <geometry>
+            <mesh>
+              <uri>../models/Obstacles/FallingRock01_Collider.dae</uri>
+              <scale>0.8 0.8 0.8</scale>
+            </mesh>
+          </geometry>
+        </collision>
+      </link>
+    </model>
+
+        <!-- Rock 5 -->
+    <model name="rock5">
+      <static>true</static>
+      <pose>-1.2 -2.1 0.1 0 0 0</pose>
+      <link name="rock1_link">
+        <visual name="visual">
+          <geometry>
+            <mesh>
+              <uri>../models/Obstacles/FallingRock01.dae</uri>
+              <scale>0.8 0.8 0.8</scale>
+            </mesh>
+          </geometry>
+        </visual>
+        <collision name="collision">
+          <geometry>
+            <mesh>
+              <uri>../models/Obstacles/FallingRock01_Collider.dae</uri>
+              <scale>0.8 0.8 0.8</scale>
+            </mesh>
+          </geometry>
+        </collision>
       </link>
     </model>
 
