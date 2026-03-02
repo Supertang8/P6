@@ -1,8 +1,12 @@
-#FROM ros:humble-ros-base-jammy
-FROM osrf/ros:humble-desktop-full-jammy
+FROM ros:humble-ros-base-jammy
+#FROM osrf/ros:humble-desktop-full-jammy
 
 # Install useful dev tools
-RUN apt update && apt install -y \
+RUN apt update && \
+    apt install -y software-properties-common && \
+    add-apt-repository universe && \
+    apt update && \
+    apt install -y \
     	python3-colcon-common-extensions \
     	python3-rosdep \
 	iputils-ping \
@@ -26,8 +30,6 @@ RUN git clone https://github.com/Livox-SDK/Livox-SDK2.git && \
     cmake .. && \
     make -j$(nproc) && \
     make install
-    
-RUN apt update && apt install ros-humble-pcl-conversions ros-humble-pcl-ros
 
 WORKDIR /root/ros2_ws
 
