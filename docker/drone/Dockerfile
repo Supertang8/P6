@@ -14,6 +14,7 @@ RUN apt update && \
     	nano \
     	cmake \
     	libpcl-dev \
+    	ros-humble-pcl-conversions ros-humble-pcl-msgs ros-humble-pcl-ros \
     && rm -rf /var/lib/apt/lists/*
 
 # Initialize rosdep
