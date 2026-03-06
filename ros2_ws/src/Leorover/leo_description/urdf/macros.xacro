@@ -541,6 +541,7 @@
       </sensor>
     </gazebo>
 
+    <!-- lidar -->
     <gazebo reference="${link_prefix}lidar_link">
       <sensor name="leo_3d_lidar" type="gpu_lidar">
         <update_rate>10</update_rate>

@@ -26,6 +26,7 @@ from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.actions import IncludeLaunchDescription
+from launch.actions import TimerAction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
@@ -48,6 +49,11 @@ def generate_launch_description():
         default_value="",
         description="Robot namespace",
     )
+    drone_ns = DeclareLaunchArgument(
+        "drone_ns",
+        default_value="",
+        description="Drone namespace",
+    )
 
     # Setup to launch the simulator and Gazebo world
     gz_sim = IncludeLaunchDescription(
@@ -57,11 +63,29 @@ def generate_launch_description():
         launch_arguments={"gz_args": LaunchConfiguration("sim_world")}.items(),
     )
 
-    spawn_robot = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(pkg_project_gazebo, "launch", "spawn_robot.launch.py")
-        ),
-        launch_arguments={"robot_ns": LaunchConfiguration("robot_ns")}.items(),
+    
+    spawn_robot = TimerAction(
+        period=2.0,  # wait 2 seconds
+        actions=[
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(
+                    os.path.join(pkg_project_gazebo, "launch", "spawn_robot.launch.py")
+                ),
+                launch_arguments={"robot_ns": LaunchConfiguration("robot_ns")}.items(),
+            )
+        ],
+    )
+
+    spawn_drone = TimerAction(
+        period=6.0,  # wait a bit longer for Gazebo to be ready
+        actions=[
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(
+                    os.path.join(pkg_project_gazebo, "launch", "spawn_x500.launch.py")
+                ),
+                launch_arguments={"drone_ns": LaunchConfiguration("drone_ns")}.items(),
+            )
+        ],
     )
 
     # Bridge ROS topics and Gazebo messages for establishing communication
@@ -84,8 +108,10 @@ def generate_launch_description():
         [
             sim_world,
             robot_ns,
+            drone_ns,
             gz_sim,
             spawn_robot,
+            spawn_drone,
             topic_bridge,
         ]
     )
