@@ -3,9 +3,9 @@ FROM ros:humble-ros-base-jammy
 
 # Install useful dev tools
 RUN apt update && \
+    # apt upgrade -y && \
     apt install -y software-properties-common && \
     add-apt-repository universe && \
-    apt update && \
     apt install -y \
     	python3-colcon-common-extensions \
     	python3-rosdep \
@@ -14,8 +14,16 @@ RUN apt update && \
     	nano \
     	cmake \
     	libpcl-dev \
-    	ros-humble-pcl-conversions ros-humble-pcl-msgs ros-humble-pcl-ros \
-    && rm -rf /var/lib/apt/lists/*
+    	ros-humble-pcl-conversions ros-humble-pcl-msgs ros-humble-pcl-ros \ 
+   && rm -rf /var/lib/apt/lists/* 
+ 
+#Mavlink communcation
+RUN apt update && \
+    apt install -y python3-pip  && \
+    pip3 install future  && \ 
+    pip3 install mavproxy  && \ 
+    apt remove -y modemmanager
+    
 
 # Initialize rosdep
 RUN rosdep init || true
