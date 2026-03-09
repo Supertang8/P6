@@ -191,6 +191,8 @@ pyrightconfig.json
 ### ROS2 ###
 install/
 log/
+bags/
+FAST_LIO/
 
 # Ignore generated docs
 *.dox
