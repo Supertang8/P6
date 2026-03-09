@@ -3,9 +3,9 @@ FROM ros:humble-ros-base-jammy
 
 # Install useful dev tools
 RUN apt update && \
-    # apt upgrade -y && \
     apt install -y software-properties-common && \
     add-apt-repository universe && \
+    apt update && \
     apt install -y \
     	python3-colcon-common-extensions \
     	python3-rosdep \
@@ -14,16 +14,12 @@ RUN apt update && \
     	nano \
     	cmake \
     	libpcl-dev \
-    	ros-humble-pcl-conversions ros-humble-pcl-msgs ros-humble-pcl-ros \ 
-   && rm -rf /var/lib/apt/lists/* 
- 
-#Mavlink communcation
-RUN apt update && \
-    apt install -y python3-pip  && \
-    pip3 install future  && \ 
-    pip3 install mavproxy  && \ 
-    apt remove -y modemmanager
-    
+    	ros-humble-pcl-conversions ros-humble-pcl-msgs ros-humble-pcl-ros \
+    	libeigen3-dev \
+	ros-humble-tf2-ros \
+	ros-humble-tf2-eigen \
+	ros-humble-rviz2 \
+    && rm -rf /var/lib/apt/lists/*
 
 # Initialize rosdep
 RUN rosdep init || true
@@ -39,6 +35,22 @@ RUN git clone https://github.com/Livox-SDK/Livox-SDK2.git && \
     cmake .. && \
     make -j$(nproc) && \
     make install
+
+WORKDIR /root/deps_ws/src
+
+RUN git clone https://github.com/Supertang8/livox_ros_driver2.git 
+
+RUN git clone https://github.com/hku-mars/FAST_LIO.git -b ROS2 && \
+    cd FAST_LIO && \
+    git submodule update --init --recursive
+
+WORKDIR /root/deps_ws
+
+RUN /bin/bash -c "source /opt/ros/humble/setup.bash && \
+    colcon build --symlink-install"
+    
+RUN echo "source /root/deps_ws/install/setup.bash" >> /root/.bashrc
+RUN echo "source /root/ros2_ws/install/setup.bash" >> /root/.bashrc
 
 WORKDIR /root/ros2_ws
 
