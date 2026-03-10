@@ -15,7 +15,7 @@ def spawn_drone(context: LaunchContext, namespace: LaunchConfiguration):
     sdf_file = os.path.join(
         pkg_description,
         "sdf",
-        "x500",
+        "x500_lidar_front",
         "model.sdf",
     )
 
@@ -25,6 +25,13 @@ def spawn_drone(context: LaunchContext, namespace: LaunchConfiguration):
     else:
         drone_name = "x500" + drone_ns
         prefix = drone_ns + "_"
+
+    static_tf = Node(
+        package="tf2_ros",
+        executable="static_transform_publisher",
+        arguments=["0","0","0","0","0","0","base_link","lidar_link"],
+        output="screen"
+    )
 
     spawn_entity = Node(
         namespace=drone_ns,
@@ -36,7 +43,7 @@ def spawn_drone(context: LaunchContext, namespace: LaunchConfiguration):
             "-name",
             drone_name,
             "-z",
-            "1.0",
+            "3.0",
         ],
         output="screen",
     )
@@ -46,8 +53,9 @@ def spawn_drone(context: LaunchContext, namespace: LaunchConfiguration):
         executable="parameter_bridge",
         name=prefix + "bridge",
         arguments=[
-           "/model/x500/command/motor_speed@actuator_msgs/msg/Actuators@gz.msgs.Actuators",
-            "/world/default/model/x500/link/base_link/sensor/imu_sensor/imu@sensor_msgs/msg/Imu@gz.msgs.IMU",
+            f"/model/{drone_name}/command/motor_speed@ros_gz_interfaces/msg/Actuators@gz.msgs.Actuators",
+            f"/world/leo_p6/model/{drone_name}/link/base_link/sensor/imu_sensor/imu@sensor_msgs/msg/Imu@gz.msgs.IMU",
+            drone_ns + "/drone_lidar/points@sensor_msgs/msg/PointCloud2@ignition.msgs.PointCloudPacked",
         ],
         output="screen",
     )
@@ -55,6 +63,7 @@ def spawn_drone(context: LaunchContext, namespace: LaunchConfiguration):
     return [
         spawn_entity,
         bridge,
+        static_tf,
     ]
 
 

@@ -75,7 +75,7 @@ def spawn_robot(context: LaunchContext, namespace: LaunchConfiguration):
             "-name",
             robot_gazebo_name,
             "-z",
-            "1.65",
+            "0.5",
         ],
     )
 
