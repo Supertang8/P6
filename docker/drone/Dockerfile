@@ -24,6 +24,16 @@ RUN apt update && \
     pip3 install mavproxy  && \ 
     apt remove -y modemmanager
     
+#DDS stuff
+WORKDIR /root
+RUN git clone https://github.com/eProsima/Micro-XRCE-DDS-Agent.git && \
+	cd Micro-XRCE-DDS-Agent && \
+	mkdir build && \
+	cd build && \
+	cmake .. && \
+	make && \
+	sudo make install && \
+	sudo ldconfig /usr/local/lib/
 
 # Initialize rosdep
 RUN rosdep init || true
@@ -31,6 +41,12 @@ RUN rosdep update
 
 # Auto-source ROS
 RUN echo "source /opt/ros/humble/setup.bash" >> /root/.bashrc
+RUN echo "source /root/ros2_ws/install/setup.bash" >> /root/.bashrc 
+
+# Colcon build
+WORKDIR /root/ros2_ws
+RUN  colcon build
+    
 
 WORKDIR /root
 RUN git clone https://github.com/Livox-SDK/Livox-SDK2.git && \
