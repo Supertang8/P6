@@ -39,7 +39,7 @@ RUN git clone https://github.com/PX4/PX4-Autopilot.git --recursive && \
 	cd PX4-Autopilot/ && \
 	make px4_sitl
 	
-RUN apt install -y ros-humble-ros-gzgarden
+# RUN apt install -y ros-humble-ros-gzgarden
 
 
 # Initialize rosdep
