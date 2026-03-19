@@ -49,11 +49,6 @@ def generate_launch_description():
         default_value="",
         description="Robot namespace",
     )
-    drone_ns = DeclareLaunchArgument(
-        "drone_ns",
-        default_value="",
-        description="Drone namespace",
-    )
 
     # Setup to launch the simulator and Gazebo world
     gz_sim = IncludeLaunchDescription(
@@ -76,18 +71,6 @@ def generate_launch_description():
         ],
     )
 
-    spawn_drone = TimerAction(
-        period=6.0,  # wait a bit longer for Gazebo to be ready
-        actions=[
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(
-                    os.path.join(pkg_project_gazebo, "launch", "spawn_x500.launch.py")
-                ),
-                launch_arguments={"drone_ns": LaunchConfiguration("drone_ns")}.items(),
-            )
-        ],
-    )
-
     # Bridge ROS topics and Gazebo messages for establishing communication
     topic_bridge = Node(
         package="ros_gz_bridge",
@@ -95,6 +78,7 @@ def generate_launch_description():
         name="clock_bridge",
         arguments=[
             "/clock@rosgraph_msgs/msg/Clock[ignition.msgs.Clock",
+            "/drone_lidar/points@sensor_msgs/msg/PointCloud2[ignition.msgs.PointCloudPacked",
         ],
         parameters=[
             {
@@ -108,10 +92,8 @@ def generate_launch_description():
         [
             sim_world,
             robot_ns,
-            drone_ns,
             gz_sim,
             spawn_robot,
-            spawn_drone,
             topic_bridge,
         ]
     )

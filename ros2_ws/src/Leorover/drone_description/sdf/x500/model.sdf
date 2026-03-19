@@ -4,8 +4,7 @@
     <include merge='true'>
       <uri>model://x500_base</uri>
     </include>
-
-    <plugin filename="libgz-sim-multicopter-motor-model-system"
+    <plugin filename="gz-sim-multicopter-motor-model-system"
       name="gz::sim::systems::MulticopterMotorModel">
       <jointName>rotor_0_joint</jointName>
       <linkName>rotor_0</linkName>
@@ -22,7 +21,7 @@
       <rotorVelocitySlowdownSim>10</rotorVelocitySlowdownSim>
       <motorType>velocity</motorType>
     </plugin>
-    <plugin filename="libgz-sim-multicopter-motor-model-system"
+    <plugin filename="gz-sim-multicopter-motor-model-system"
       name="gz::sim::systems::MulticopterMotorModel">
       <jointName>rotor_1_joint</jointName>
       <linkName>rotor_1</linkName>
@@ -39,7 +38,7 @@
       <rotorVelocitySlowdownSim>10</rotorVelocitySlowdownSim>
       <motorType>velocity</motorType>
     </plugin>
-    <plugin filename="libgz-sim-multicopter-motor-model-system"
+    <plugin filename="gz-sim-multicopter-motor-model-system"
       name="gz::sim::systems::MulticopterMotorModel">
       <jointName>rotor_2_joint</jointName>
       <linkName>rotor_2</linkName>
@@ -56,7 +55,7 @@
       <rotorVelocitySlowdownSim>10</rotorVelocitySlowdownSim>
       <motorType>velocity</motorType>
     </plugin>
-    <plugin filename="libgz-sim-multicopter-motor-model-system"
+    <plugin filename="gz-sim-multicopter-motor-model-system"
       name="gz::sim::systems::MulticopterMotorModel">
       <jointName>rotor_3_joint</jointName>
       <linkName>rotor_3</linkName>
@@ -73,10 +72,123 @@
       <rotorVelocitySlowdownSim>10</rotorVelocitySlowdownSim>
       <motorType>velocity</motorType>
     </plugin>
-    <!--
     <plugin filename="MotorFailurePlugin"
       name="gz::sim::systems::MotorFailureSystem">
     </plugin>
-    -->
+
+    <joint name="lidar_joint" type="fixed">
+      <parent>base_link</parent>
+      <child>lidar_link</child>
+      <pose>0 0 0 0 0 0</pose>
+    </joint>
+
+    <!-- Lidar link -->
+    <link name="lidar_link">
+      <pose>0 0 0.2 0 0 0</pose>
+      <inertial>
+        <mass>0.8</mass>
+        <pose>0 0 0 0 0 0</pose>
+        <inertia>
+          <ixx>0.001</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0.001</iyy>
+          <iyz>0</iyz>
+          <izz>0.001</izz>
+        </inertia>
+      </inertial>
+
+      <!-- Box body -->
+      <visual name="lidar_box_visual">
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.06 0.06 0.03</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.5 0.5 0.5 1</ambient>
+          <diffuse>0.5 0.5 0.5 1</diffuse>
+        </material>
+      </visual>
+
+      <collision name="lidar_box_collision">
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.06 0.06 0.03</size>
+          </box>
+        </geometry>
+      </collision>
+
+      <!-- Fake lens sphere -->
+      <visual name="lidar_lens_visual">
+        <pose>0 0 -0.01 0 0 0</pose>
+        <geometry>
+          <sphere>
+            <radius>0.02</radius>
+          </sphere>
+        </geometry>
+        <material>
+          <ambient>0 0 0 1</ambient>
+          <diffuse>0 0 0 1</diffuse>
+        </material>
+      </visual>
+
+      <collision name="lidar_lens_collision">
+        <pose>0 0 -0.01 0 0 0</pose>
+        <geometry>
+          <sphere>
+            <radius>0.02</radius>
+          </sphere>
+        </geometry>
+      </collision>
+
+
+      <sensor name="x500_3d_lidar" type="gpu_lidar">
+        <pose>0 0 -0.05 0 0 0</pose>
+        <always_on>true</always_on>
+        <update_rate>10</update_rate>
+        <visualize>true</visualize>
+
+        <topic>drone_lidar</topic>
+        <gz_frame_id>lidar_link</gz_frame_id>
+
+        <lidar>
+
+          <scan>
+
+            <horizontal>
+              <samples>1024</samples>
+              <resolution>1</resolution>
+              <min_angle>-3.14159</min_angle>
+              <max_angle>3.14159</max_angle>
+            </horizontal>
+
+            <vertical>
+              <samples>16</samples>
+              <resolution>1</resolution>
+              <min_angle>-0.261799</min_angle>
+              <max_angle>0.261799</max_angle>
+            </vertical>
+
+          </scan>
+
+          <range>
+            <min>0.3</min>
+            <max>100.0</max>
+            <resolution>0.01</resolution>
+          </range>
+
+          <noise>
+            <type>gaussian</type>
+            <mean>0</mean>
+            <stddev>0.01</stddev>
+          </noise>
+
+        </lidar>
+
+      </sensor>
+    </link>
   </model>
 </sdf>
