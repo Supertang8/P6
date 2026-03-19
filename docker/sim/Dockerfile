@@ -36,11 +36,6 @@ RUN git clone https://github.com/PX4/PX4-Autopilot.git --recursive && \
     cd PX4-Autopilot/ && \
     make px4_sitl
 
-RUN cp ~/ros2_ws/src/Leorover/leo_simulator-ros2/leo_gz_worlds/worlds/leo_p6 ~/PX4-Autopilot/Tools/simulation/gz/worlds && \
-    cp ~/ros2_ws/src/Leorover/leo_simulator-ros2/leo_gz_worlds/models/Obstacles ~/PX4-Autopilot/Tools/simulation/gz/models && \
-    rm -rf ~/PX4-Autopilot/Tools/simulation/gz/models/x500 && \
-    cp ~/ros2_ws/src/Leorover/drone_description/sdf/x500 ~/PX4-Autopilot/Tools/simulation/gz/models
-
 WORKDIR /root
 
 RUN git clone -b v2.4.3 https://github.com/eProsima/Micro-XRCE-DDS-Agent.git && \
@@ -51,6 +46,11 @@ RUN git clone -b v2.4.3 https://github.com/eProsima/Micro-XRCE-DDS-Agent.git && 
     make && \
     sudo make install && \
     sudo ldconfig /usr/local/lib/RU
+
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
 
 WORKDIR /root/ros2_ws
 
