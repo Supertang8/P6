@@ -9,13 +9,12 @@ RUN apt update && \
     apt install -y \
     	python3-colcon-common-extensions \
     	python3-rosdep \
-	iputils-ping \
-	net-tools \
+		iputils-ping \
+		net-tools \
     	nano \
     	cmake \
     	libpcl-dev \
-    	ros-humble-pcl-conversions ros-humble-pcl-msgs ros-humble-pcl-ros \ 
-   && rm -rf /var/lib/apt/lists/* 
+    	ros-humble-pcl-conversions ros-humble-pcl-msgs ros-humble-pcl-ros
  
 #Mavlink communcation
 RUN apt update && \
@@ -46,7 +45,6 @@ RUN echo "source /root/ros2_ws/install/setup.bash" >> /root/.bashrc
 # Colcon build
 WORKDIR /root/ros2_ws
 RUN  colcon build
-    
 
 WORKDIR /root
 RUN git clone https://github.com/Livox-SDK/Livox-SDK2.git && \
@@ -55,6 +53,9 @@ RUN git clone https://github.com/Livox-SDK/Livox-SDK2.git && \
     cmake .. && \
     make -j$(nproc) && \
     make install
+
+#Remove list
+RUN rm -rf /var/lib/apt/lists/* 
 
 WORKDIR /root/ros2_ws
 
