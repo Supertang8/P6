@@ -40,7 +40,7 @@ RUN rosdep update
 
 # Auto-source ROS
 RUN echo "source /opt/ros/humble/setup.bash" >> /root/.bashrc
-RUN echo "source /root/ros2_ws/install/setup.bash" >> /root/.bashrc 
+RUN echo "source /root/ros2_drone_ws/install/setup.bash" >> /root/.bashrc 
 
 # Colcon build
 # WORKDIR /root/ros2_ws
