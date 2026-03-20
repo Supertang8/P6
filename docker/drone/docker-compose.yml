@@ -11,6 +11,7 @@ services:
       - type: bind
         source: ./../../ros2_drone_ws
         target: /root/ros2_drone_ws
+    command: MicroXRCEAgent serial --dev /dev/ttyAMA0 -b 921600
     stdin_open: true
     tty: true
     devices:
