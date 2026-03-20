@@ -43,8 +43,8 @@ RUN echo "source /opt/ros/humble/setup.bash" >> /root/.bashrc
 RUN echo "source /root/ros2_ws/install/setup.bash" >> /root/.bashrc 
 
 # Colcon build
-WORKDIR /root/ros2_ws
-RUN  colcon build
+# WORKDIR /root/ros2_ws
+# RUN  colcon build
 
 WORKDIR /root
 RUN git clone https://github.com/Livox-SDK/Livox-SDK2.git && \
@@ -57,6 +57,6 @@ RUN git clone https://github.com/Livox-SDK/Livox-SDK2.git && \
 #Remove list
 RUN rm -rf /var/lib/apt/lists/* 
 
-WORKDIR /root/ros2_ws
+WORKDIR /root/ros2_drone_ws
 
 CMD ["bash"]
