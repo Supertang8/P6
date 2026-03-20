@@ -2,7 +2,7 @@ from launch import LaunchDescription
 from launch.actions import ExecuteProcess
 from launch_ros.actions import Node
 import os
-
+#
 def generate_launch_description():
 
     PX4_DIR = os.environ.get("PX4_AUTOPILOT_PATH", "~/PX4-Autopilot")
@@ -25,4 +25,5 @@ def generate_launch_description():
             ],
             output="screen"
         ),
+
     ])

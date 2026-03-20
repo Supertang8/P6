@@ -54,4 +54,7 @@ ENTRYPOINT ["/entrypoint.sh"]
 
 WORKDIR /root/ros2_ws
 
+RUN colcon build --packages-ignore livox_ros_driver2 && \
+    source install/setup.bash
+
 CMD ["bash"]
