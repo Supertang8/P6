@@ -86,7 +86,7 @@
         <topic>drone_lidar</topic>
         <gz_frame_id>lidar_link</gz_frame_id>
 
-        <lidar>
+        <ray>
 
           <scan>
 
@@ -118,7 +118,7 @@
             <stddev>0.01</stddev>
           </noise>
 
-        </lidar>
+        </ray>
 
       </sensor>
     </link>

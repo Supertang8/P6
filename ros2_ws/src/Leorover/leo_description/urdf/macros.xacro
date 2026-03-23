@@ -543,7 +543,7 @@
 
     <!-- lidar -->
     <gazebo reference="${link_prefix}lidar_link">
-      <sensor name="leo_3d_lidar" type="gpu_lidar">
+      <sensor name="leo_3d_lidar" type="ray">
         <update_rate>10</update_rate>
         <always_on>1</always_on>
         <visualize>true</visualize>
@@ -551,7 +551,7 @@
         <topic>rover_lidar</topic>
         <gz_frame_id>${link_prefix}lidar_link</gz_frame_id>
 
-        <lidar>
+        <ray>
           <scan>
             <horizontal>
               <samples>1024</samples>
@@ -579,7 +579,7 @@
             <mean>0.0</mean>
             <stddev>0.01</stddev>
           </noise>
-        </lidar>
+        </ray>
       </sensor>
 </gazebo>
 
