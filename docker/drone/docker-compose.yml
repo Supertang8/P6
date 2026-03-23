@@ -12,9 +12,12 @@ services:
         source: ./../../ros2_drone_ws
         target: /root/ros2_drone_ws
     command: >
-          bash -c "MicroXRCEAgent serial --dev /dev/ttyAMA0 -b 921600 &
-                  ros2 run px4_ros_com offboard_control_pos &
-                  ros2 launch livox_ros_driver2 msg_MID360_launch.py"
+        bash -c "source /opt/ros/humble/setup.bash &&
+                source /root/ros2_drone_ws/install/setup.bash &&
+                MicroXRCEAgent serial --dev /dev/ttyAMA0 -b 921600 &
+                ros2 run px4_ros_com offboard_control_pos &
+                ros2 launch livox_ros_driver2 msg_MID360_launch.py"
+
     restart: unless-stopped
     stdin_open: true
     tty: true
