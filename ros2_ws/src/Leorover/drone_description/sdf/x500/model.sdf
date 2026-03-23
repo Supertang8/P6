@@ -155,9 +155,7 @@
         <gz_frame_id>lidar_link</gz_frame_id>
 
         <lidar>
-
           <scan>
-
             <horizontal>
               <samples>1024</samples>
               <resolution>1</resolution>
@@ -168,15 +166,14 @@
             <vertical>
               <samples>16</samples>
               <resolution>1</resolution>
-              <min_angle>-0.261799</min_angle>
-              <max_angle>0.261799</max_angle>
+              <min_angle>-0.26</min_angle>
+              <max_angle>0.26</max_angle>
             </vertical>
-
           </scan>
 
           <range>
-            <min>0.3</min>
-            <max>100.0</max>
+            <min>0.1</min>
+            <max>50.0</max>
             <resolution>0.01</resolution>
           </range>
 
@@ -185,9 +182,7 @@
             <mean>0</mean>
             <stddev>0.01</stddev>
           </noise>
-
         </lidar>
-
       </sensor>
     </link>
   </model>
