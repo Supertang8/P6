@@ -1,0 +1,15 @@
+#!/bin/bash
+set -e
+
+# Source ROS2 setup
+source /opt/ros/humble/setup.bash
+source /root/ros2_drone_ws/install/setup.bash
+
+# Start MicroXRCEAgent
+MicroXRCEAgent serial --dev /dev/ttyAMA0 -b 921600 &
+
+# Launch ROS2 script
+ros2 run px4_ros_com offboard_control_pos
+
+# Keep the container running
+wait

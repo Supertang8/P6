@@ -57,6 +57,13 @@ RUN git clone https://github.com/Livox-SDK/Livox-SDK2.git && \
 #Remove list
 RUN rm -rf /var/lib/apt/lists/* 
 
+# Copy entrypoint script
+COPY entrypoint.sh /root/entrypoint.sh
+RUN chmod +x /root/entrypoint.sh
+
 WORKDIR /root/ros2_drone_ws
+
+# Set entrypoint
+ENTRYPOINT ["/root/entrypoint.sh"]
 
 CMD ["bash"]
