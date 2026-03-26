@@ -3,6 +3,50 @@ from launch.actions import ExecuteProcess, TimerAction
 from launch_ros.actions import Node
 
 def generate_launch_description():
+
+    # Generates static tf for 'camera_init'- to 'map'-frame, aligning it to gravity
+    map_2_camera_init = ExecuteProcess(
+        cmd=[
+        'ros2', 'run', 'tf2_ros', 'static_transform_publisher',
+	#'--x', '0', '--y', '0', '--z', '0', '--qx', '0.0', '--qy', '0.0', '--qz', '0.0', '--qw', '1.0',
+	'--x', '0', '--y', '0', '--z', '0', '--qx', '-0.99578', '--qy', '-0.0', '--qz', '-0.09178', '--qw', '0.00196', # Gravity transform calculated from static rosbag
+        '--frame-id', 'map',
+        '--child-frame-id', 'camera_init'
+        ],
+    )
+
+    # Generates static tf for 'map'- to 'odom'-frame. (Static assuming perfect odometry data)
+    map_2_odom = ExecuteProcess(
+        cmd=[
+        'ros2', 'run', 'tf2_ros', 'static_transform_publisher',
+	'--x', '0', '--y', '0', '--z', '0', '--qx', '-0.99578', '--qy', '-0.0', '--qz', '-0.09178', '--qw', '0.00196', # Gravity transform calculated from static rosbag
+	#'--x', '0', '--y', '0', '--z', '0', '--qx', '0.0', '--qy', '0.0', '--qz', '0.0', '--qw', '1.0', # Identity quaternions [0,0,0,1]
+        '--frame-id', 'map',
+        '--child-frame-id', 'odom'
+        ],
+    )
+
+    # Generates tf for 'odom'- to 'base_link'-frame based on /Odometry msg published by Fast-LIO
+    odom_2_base_link = ExecuteProcess(
+	cmd=[
+	'ros2', 'run', 'odom_to_tf_ros2', 'odom_to_tf',
+	'--ros-args',
+  	'-p', 'odom_topic:=/Odometry',
+	'-p', 'frame_id:=odom',
+  	'-p', 'child_frame_id:=base_link'
+	],
+    )
+
+    # Frame-transformation of body frame to align with gravity
+    body_aligned = ExecuteProcess(
+        cmd=[
+            'ros2', 'run', 'tf2_ros', 'static_transform_publisher',
+            '--x', '0', '--y', '0', '--z', '0', '--qx', '0.99578', '--qy', '0.0', '--qz', '0.09178', '--qw', '0.00196',
+            '--frame-id', 'body',
+            '--child-frame-id', 'body_aligned'
+            ],
+    )
+
     # FAST-LIO
     fastlio = ExecuteProcess(
         cmd=[
@@ -23,7 +67,7 @@ def generate_launch_description():
                 name='octomap_server',
                 output='screen',
                 parameters=[{
-    			'frame_id': 'livox_aligned',
+    			'frame_id': 'map',
 			'resolution': 0.1,
     			'base_frame_id': 'body_aligned',
 
@@ -47,6 +91,10 @@ def generate_launch_description():
 
     # Make sure return is inside the function
     return LaunchDescription([
+	map_2_camera_init,
+	map_2_odom,
+	odom_2_base_link,
+	body_aligned,
         fastlio,
         octomap
     ])
