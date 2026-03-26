@@ -561,7 +561,7 @@
             </horizontal>
 
             <vertical>
-              <samples>16</samples>
+              <samples>32</samples>
               <resolution>1</resolution>
               <min_angle>-0.261799</min_angle>   <!-- -15 deg -->
               <max_angle>0.261799</max_angle>    <!-- +15 deg -->
