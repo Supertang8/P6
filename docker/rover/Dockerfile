@@ -9,16 +9,22 @@ RUN apt update && \
     apt install -y \
     	python3-colcon-common-extensions \
     	python3-rosdep \
-	iputils-ping \
-	net-tools \
+	    iputils-ping \
+	    net-tools \
     	nano \
     	cmake \
     	libpcl-dev \
-    	ros-humble-pcl-conversions ros-humble-pcl-msgs ros-humble-pcl-ros \
-    	libeigen3-dev \
-	ros-humble-tf2-ros \
-	ros-humble-tf2-eigen \
-	ros-humble-rviz2 \
+        libeigen3-dev \
+    	ros-humble-pcl-conversions \
+        ros-humble-pcl-msgs \
+        ros-humble-pcl-ros \
+	    ros-humble-tf2-ros \
+	    ros-humble-tf2-eigen \
+	    ros-humble-rviz2 \
+        ros-humble-octomap \
+        ros-humble-octomap-msgs \
+        ros-humble-octomap-server \
+        ros-humble-octomap-rviz-plugins \
     && rm -rf /var/lib/apt/lists/*
 
 # Initialize rosdep
