@@ -12,6 +12,7 @@
 #include <atomic>
 #include <sstream>
 #include <vector>
+#include <chrono>
 
 using Trigger = std_srvs::srv::Trigger;
 
@@ -23,6 +24,7 @@ public:
     this->declare_parameter<std::string>("rover_aggregated_topic", "/rover/aggregated_pointcloud");
     this->declare_parameter<std::string>("drone_trigger_service", "/drone/trigger_accumulation");
     this->declare_parameter<std::string>("rover_trigger_service", "/rover/trigger_accumulation");
+    this->declare_parameter<double>("request_retry_timeout_sec", 6.0);
     this->declare_parameter<std::vector<double>>(
       "initial_guess_drone_to_rover",
       std::vector<double>{
@@ -48,21 +50,26 @@ public:
     rover_aggregated_topic_ = this->get_parameter("rover_aggregated_topic").as_string();
     drone_trigger_service_ = this->get_parameter("drone_trigger_service").as_string();
     rover_trigger_service_ = this->get_parameter("rover_trigger_service").as_string();
+    request_retry_timeout_sec_ = this->get_parameter("request_retry_timeout_sec").as_double();
 
     RCLCPP_INFO(this->get_logger(), "Drone aggregated topic: %s", drone_aggregated_topic_.c_str());
     RCLCPP_INFO(this->get_logger(), "Rover aggregated topic: %s", rover_aggregated_topic_.c_str());
     RCLCPP_INFO(this->get_logger(), "Drone trigger service: %s", drone_trigger_service_.c_str());
     RCLCPP_INFO(this->get_logger(), "Rover trigger service: %s", rover_trigger_service_.c_str());
+    RCLCPP_INFO(this->get_logger(), "Retry timeout: %.2f s", request_retry_timeout_sec_);
 
     // Subscribe to aggregated pointcloud topics from the two remote aggregators.
+    auto aggregated_qos = rclcpp::QoS(rclcpp::KeepLast(1));
+    aggregated_qos.reliable();
+    aggregated_qos.transient_local();
     sub_drone_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
       drone_aggregated_topic_,
-      rclcpp::SensorDataQoS(),
+      aggregated_qos,
       [this](const sensor_msgs::msg::PointCloud2::SharedPtr msg) { on_drone_cloud(msg); });
 
     sub_rover_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
       rover_aggregated_topic_,
-      rclcpp::SensorDataQoS(),
+      aggregated_qos,
       [this](const sensor_msgs::msg::PointCloud2::SharedPtr msg) { on_rover_cloud(msg); });
 
     // Clients used to request one accumulated cloud from each machine.
@@ -87,12 +94,17 @@ private:
   std::atomic<bool> rover_cloud_received_;
   bool drone_requested_ = false;
   bool rover_requested_ = false;
+  bool drone_request_in_flight_ = false;
+  bool rover_request_in_flight_ = false;
   bool icp_done_ = false;
+  rclcpp::Time drone_last_request_time_;
+  rclcpp::Time rover_last_request_time_;
 
   std::string drone_aggregated_topic_;
   std::string rover_aggregated_topic_;
   std::string drone_trigger_service_;
   std::string rover_trigger_service_;
+  double request_retry_timeout_sec_ = 6.0;
 
   Eigen::Matrix4f initial_guess_drone_to_rover_ = Eigen::Matrix4f::Identity();
   Eigen::Matrix4f drone_lidar_to_rover_lidar_transform_ = Eigen::Matrix4f::Identity();
@@ -105,42 +117,66 @@ private:
       return;
     }
 
-    if (!drone_requested_) {
+    const auto now = this->now();
+
+    const bool drone_timed_out = drone_requested_ && !drone_cloud_received_ &&
+      (now - drone_last_request_time_).seconds() > request_retry_timeout_sec_;
+    const bool rover_timed_out = rover_requested_ && !rover_cloud_received_ &&
+      (now - rover_last_request_time_).seconds() > request_retry_timeout_sec_;
+
+    if (drone_timed_out) {
+      drone_requested_ = false;
+      RCLCPP_WARN(this->get_logger(), "No drone cloud received in time, retrying trigger request.");
+    }
+    if (rover_timed_out) {
+      rover_requested_ = false;
+      RCLCPP_WARN(this->get_logger(), "No rover cloud received in time, retrying trigger request.");
+    }
+
+    if (!drone_cloud_received_ && !drone_requested_ && !drone_request_in_flight_) {
       if (!drone_client_->wait_for_service(std::chrono::milliseconds(200))) {
         RCLCPP_WARN_THROTTLE(
           this->get_logger(), *this->get_clock(), 3000,
           "Waiting for drone trigger service: %s", drone_trigger_service_.c_str());
       } else {
+        drone_request_in_flight_ = true;
+        drone_last_request_time_ = now;
         auto req = std::make_shared<Trigger::Request>();
         drone_client_->async_send_request(
           req,
           [this](rclcpp::Client<Trigger>::SharedFuture future) {
+            drone_request_in_flight_ = false;
             const auto response = future.get();
             if (response->success) {
               drone_requested_ = true;
               RCLCPP_INFO(this->get_logger(), "Drone accumulation requested: %s", response->message.c_str());
             } else {
+              drone_requested_ = false;
               RCLCPP_WARN(this->get_logger(), "Drone accumulation request rejected: %s", response->message.c_str());
             }
           });
       }
     }
 
-    if (!rover_requested_) {
+    if (!rover_cloud_received_ && !rover_requested_ && !rover_request_in_flight_) {
       if (!rover_client_->wait_for_service(std::chrono::milliseconds(200))) {
         RCLCPP_WARN_THROTTLE(
           this->get_logger(), *this->get_clock(), 3000,
           "Waiting for rover trigger service: %s", rover_trigger_service_.c_str());
       } else {
+        rover_request_in_flight_ = true;
+        rover_last_request_time_ = now;
         auto req = std::make_shared<Trigger::Request>();
         rover_client_->async_send_request(
           req,
           [this](rclcpp::Client<Trigger>::SharedFuture future) {
+            rover_request_in_flight_ = false;
             const auto response = future.get();
             if (response->success) {
               rover_requested_ = true;
               RCLCPP_INFO(this->get_logger(), "Rover accumulation requested: %s", response->message.c_str());
             } else {
+              rover_requested_ = false;
               RCLCPP_WARN(this->get_logger(), "Rover accumulation request rejected: %s", response->message.c_str());
             }
           });

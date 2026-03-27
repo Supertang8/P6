@@ -46,8 +46,11 @@ public:
       rclcpp::SensorDataQoS(),
       [this](const CustomMsg::SharedPtr msg) { on_lidar(msg); });
 
+    auto aggregated_qos = rclcpp::QoS(rclcpp::KeepLast(1));
+    aggregated_qos.reliable();
+    aggregated_qos.transient_local();
     pub_aggregated_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
-      aggregated_topic_, rclcpp::SensorDataQoS());
+      aggregated_topic_, aggregated_qos);
 
     srv_trigger_ = this->create_service<std_srvs::srv::Trigger>(
       trigger_service_,
