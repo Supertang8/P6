@@ -40,7 +40,8 @@ RUN rosdep update
 
 # Auto-source ROS
 RUN echo "source /opt/ros/humble/setup.bash" >> /root/.bashrc
-RUN echo "source /root/ros2_drone_ws/install/setup.bash" >> /root/.bashrc 
+RUN echo "source /root/ros2_ws/install/setup.bash" >> /root/.bashrc 
+RUN echo "alias cb='colcon build --packages-select livox_ros_driver2 px4_msgs px4_ros_com system_package'" >> /root/.bashrc 
 
 # Colcon build
 # WORKDIR /root/ros2_ws
@@ -61,7 +62,7 @@ RUN rm -rf /var/lib/apt/lists/*
 COPY entrypoint.sh /root/entrypoint.sh
 RUN chmod +x /root/entrypoint.sh
 
-WORKDIR /root/ros2_drone_ws
+WORKDIR /root/ros2_ws
 
 # Set entrypoint
 ENTRYPOINT ["/root/entrypoint.sh"]

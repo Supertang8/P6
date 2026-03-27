@@ -229,5 +229,8 @@ AMENT_IGNORE
 pyvenv.cfg
 pip-selfcheck.json
 
+#ros2 crash
+core.*
+
 # End of https://www.toptal.com/developers/gitignore/api/venv,ros2,python,git
 

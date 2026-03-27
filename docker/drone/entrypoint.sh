@@ -3,7 +3,7 @@ set -e
 
 # Source ROS2 setup
 source /opt/ros/humble/setup.bash
-source /root/ros2_drone_ws/install/setup.bash
+source /root/ros2_ws/install/setup.bash
 
 # Start MicroXRCEAgent
 MicroXRCEAgent serial --dev /dev/ttyAMA0 -b 921600 &

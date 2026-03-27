@@ -7,10 +7,10 @@ services:
       - DISPLAY=${DISPLAY}
       - QT_X11_NO_MITSHM=1
     volumes:
-      - ./ros2_drone_ws:/root/ros2_drone_ws
+      - ./ros2_drone_ws:/root/ros2_ws
       - type: bind
-        source: ./../../ros2_drone_ws
-        target: /root/ros2_drone_ws
+        source: ./../../ros2_ws
+        target: /root/ros2_ws
     restart: unless-stopped
     stdin_open: true
     tty: true
