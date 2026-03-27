@@ -191,7 +191,6 @@ pyrightconfig.json
 install/
 log/
 bags/
-FAST_LIO/
 
 # Ignore generated docs
 *.dox
