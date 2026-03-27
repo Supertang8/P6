@@ -65,5 +65,4 @@ WORKDIR /root/ros2_drone_ws
 
 # Set entrypoint
 ENTRYPOINT ["/root/entrypoint.sh"]
-
-CMD ["bash"]
+# CMD ["bash"]

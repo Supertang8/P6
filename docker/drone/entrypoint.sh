@@ -9,7 +9,8 @@ source /root/ros2_drone_ws/install/setup.bash
 MicroXRCEAgent serial --dev /dev/ttyAMA0 -b 921600 &
 
 # Launch ROS2 script
-ros2 run px4_ros_com offboard_control_pos
+ros2 run px4_ros_com offboard_control_pos &
+ros2 launch livox_ros_driver2 msg_MID360_launch.py
 
 # Keep the container running
 wait
