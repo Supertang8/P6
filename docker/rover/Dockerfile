@@ -42,7 +42,8 @@ RUN git clone https://github.com/Livox-SDK/Livox-SDK2.git && \
     cd Livox-SDK2/build && \
     cmake .. && \
     make -j$(nproc) && \
-    make install
+    make install && \
+    ldconfig
 
 WORKDIR /root/ros2_ws
 
