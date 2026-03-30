@@ -1,5 +1,4 @@
 FROM ros:humble-ros-base-jammy
-#FROM osrf/ros:humble-desktop-full-jammy
 
 # Install useful dev tools
 RUN apt update && \
@@ -43,10 +42,8 @@ RUN echo "source /opt/ros/humble/setup.bash" >> /root/.bashrc
 RUN echo "source /root/ros2_ws/install/setup.bash" >> /root/.bashrc 
 RUN echo "alias cb='colcon build --packages-select livox_ros_driver2 px4_msgs px4_ros_com system_package fast_lio'" >> /root/.bashrc 
 
-# Colcon build
-# WORKDIR /root/ros2_ws
-# RUN  colcon build
 
+# Install Livox SDK
 WORKDIR /root
 RUN git clone https://github.com/Livox-SDK/Livox-SDK2.git && \
     mkdir -p Livox-SDK2/build && \
@@ -66,4 +63,4 @@ WORKDIR /root/ros2_ws
 
 # Set entrypoint
 ENTRYPOINT ["/root/entrypoint.sh"]
-# CMD ["bash"]
+
