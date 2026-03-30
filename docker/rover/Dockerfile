@@ -33,6 +33,8 @@ RUN rosdep update
 
 # Auto-source ROS
 RUN echo "source /opt/ros/humble/setup.bash" >> /root/.bashrc
+RUN echo "alias cb='cd /root/ros2_ws && colcon build --packages-select livox_ros_driver2 fast_lio system_package mapping_launch'" >> /root/.bashrc
+RUN echo "source /root/ros2_ws/install/setup.bash" >> /root/.bashrc
 
 WORKDIR /root
 RUN git clone https://github.com/Livox-SDK/Livox-SDK2.git && \
@@ -41,22 +43,6 @@ RUN git clone https://github.com/Livox-SDK/Livox-SDK2.git && \
     cmake .. && \
     make -j$(nproc) && \
     make install
-
-WORKDIR /root/deps_ws/src
-
-RUN git clone https://github.com/Supertang8/livox_ros_driver2.git 
-
-RUN git clone https://github.com/hku-mars/FAST_LIO.git -b ROS2 && \
-    cd FAST_LIO && \
-    git submodule update --init --recursive
-
-WORKDIR /root/deps_ws
-
-RUN /bin/bash -c "source /opt/ros/humble/setup.bash && \
-    colcon build --symlink-install"
-    
-RUN echo "source /root/deps_ws/install/setup.bash" >> /root/.bashrc
-RUN echo "source /root/ros2_ws/install/setup.bash" >> /root/.bashrc
 
 WORKDIR /root/ros2_ws
 
