@@ -25,6 +25,8 @@ RUN apt update && \
         ros-humble-octomap-msgs \
         ros-humble-octomap-server \
         ros-humble-octomap-rviz-plugins \
+        ros-humble-navigation2 \
+	ros-humble-nav2-bringup \
     && rm -rf /var/lib/apt/lists/*
 
 # Initialize rosdep
