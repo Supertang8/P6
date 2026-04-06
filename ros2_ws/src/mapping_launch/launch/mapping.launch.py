@@ -5,24 +5,13 @@ from launch_ros.actions import Node
 def generate_launch_description():
 
     # Generates static tf for 'camera_init'- to 'map'-frame, aligning it to gravity
-    map_2_camera_init = ExecuteProcess(
+    odom_2_camera_init = ExecuteProcess(
         cmd=[
         'ros2', 'run', 'tf2_ros', 'static_transform_publisher',
-	#'--x', '0', '--y', '0', '--z', '0', '--qx', '0.0', '--qy', '0.0', '--qz', '0.0', '--qw', '1.0',
-	'--x', '0', '--y', '0', '--z', '0', '--qx', '-0.99578', '--qy', '-0.0', '--qz', '-0.09178', '--qw', '0.00196', # Gravity transform calculated from static rosbag
-        '--frame-id', 'map',
+	'--x', '0', '--y', '0', '--z', '0', '--qx', '0.0', '--qy', '0.0', '--qz', '0.0', '--qw', '1.0',
+	#'--x', '0', '--y', '0', '--z', '0', '--qx', '-0.99578', '--qy', '-0.0', '--qz', '-0.09178', '--qw', '0.00196', # Gravity transform calculated from static rosbag
+        '--frame-id', 'odom',
         '--child-frame-id', 'camera_init'
-        ],
-    )
-
-    # Generates static tf for 'map'- to 'odom'-frame. (Static assuming perfect odometry data)
-    map_2_odom = ExecuteProcess(
-        cmd=[
-        'ros2', 'run', 'tf2_ros', 'static_transform_publisher',
-	'--x', '0', '--y', '0', '--z', '0', '--qx', '-0.99578', '--qy', '-0.0', '--qz', '-0.09178', '--qw', '0.00196', # Gravity transform calculated from static rosbag
-	#'--x', '0', '--y', '0', '--z', '0', '--qx', '0.0', '--qy', '0.0', '--qz', '0.0', '--qw', '1.0', # Identity quaternions [0,0,0,1]
-        '--frame-id', 'map',
-        '--child-frame-id', 'odom'
         ],
     )
 
@@ -33,7 +22,8 @@ def generate_launch_description():
 	'--ros-args',
   	'-p', 'odom_topic:=/Odometry',
 	'-p', 'frame_id:=odom',
-  	'-p', 'child_frame_id:=base_link'
+  	'-p', 'child_frame_id:=base_link',
+	'-p', 'use_yaw_only:=true'
 	],
     )
 
@@ -59,7 +49,7 @@ def generate_launch_description():
 
     # Octomap (delayed to avoid TF issues)
     octomap = TimerAction(
-        period=4.0,  # wait 4 seconds before starting
+        period=2.0,  # wait 2 seconds before starting
         actions=[
             Node(
                 package='octomap_server',
@@ -67,20 +57,20 @@ def generate_launch_description():
                 name='octomap_server',
                 output='screen',
                 parameters=[{
-    			'frame_id': 'map',
+    			'frame_id': 'odom',
 			'resolution': 0.1,
-    			'base_frame_id': 'body_aligned',
+    			'base_frame_id': 'base_link',
 
 			'filter_speckles': True,
 
 			'filter_ground_plane': True,
 			'ground_filter.angle': 0.1,
-			'ground_filter.distance': 0.2,
-			'ground_filter.plane_distance': 0.5,
+			'ground_filter.distance': 0.3,
+			'ground_filter.plane_distance': 0.1,
 
 			'sensor_model.max_range': 8.0,
 			'point_cloud_max_z': 1.2,
-			'point_cloud_min_z': 0.1
+			'point_cloud_min_z': 0.0
                 }],
                 remappings=[
                     ('cloud_in', '/cloud_registered_body')
@@ -91,8 +81,7 @@ def generate_launch_description():
 
     # Make sure return is inside the function
     return LaunchDescription([
-	map_2_camera_init,
-	map_2_odom,
+	odom_2_camera_init,
 	odom_2_base_link,
 	body_aligned,
         fastlio,
