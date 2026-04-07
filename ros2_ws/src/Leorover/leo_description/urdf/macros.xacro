@@ -544,7 +544,7 @@
     <!-- lidar -->
     <gazebo reference="${link_prefix}lidar_link">
       <sensor name="leo_3d_lidar" type="gpu_lidar">
-        <update_rate>50</update_rate>
+        <update_rate>20</update_rate>
         <always_on>1</always_on>
         <visualize>true</visualize>
 
@@ -561,7 +561,7 @@
             </horizontal>
 
             <vertical>
-              <samples>32</samples>
+              <samples>16</samples>
               <resolution>1</resolution>
               <min_angle>-0.261799</min_angle>   <!-- -15 deg -->
               <max_angle>0.261799</max_angle>    <!-- +15 deg -->
