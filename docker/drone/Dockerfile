@@ -40,7 +40,7 @@ RUN rosdep update
 # Auto-source ROS
 RUN echo "source /opt/ros/humble/setup.bash" >> /root/.bashrc
 RUN echo "source /root/ros2_ws/install/setup.bash" >> /root/.bashrc 
-RUN echo "alias cb='colcon build --packages-select livox_ros_driver2 px4_msgs px4_ros_com system_package fast_lio'" >> /root/.bashrc 
+RUN echo "alias cb='colcon build --packages-select livox_ros_driver2 px4_msgs px4_controller system_package fast_lio'" >> /root/.bashrc 
 
 
 # Install Livox SDK
