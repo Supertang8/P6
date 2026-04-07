@@ -34,7 +34,7 @@ RUN git clone https://github.com/eProsima/Micro-XRCE-DDS-Agent.git && \
 #PX4 Stuff
 WORKDIR /root
 # --branch v1.15.0 --depth 1 
-RUN git clone --branch v1.17.0-alpha1 https://github.com/PX4/PX4-Autopilot.git --recursive && \
+RUN git clone git@github.com:jacob-slot/PX4-Autopilot-P6.git --recursive && \
 	bash ./PX4-Autopilot/Tools/setup/ubuntu.sh && \
 	cd PX4-Autopilot/ && \
 	make px4_sitl
