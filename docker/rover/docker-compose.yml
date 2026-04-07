@@ -1,5 +1,5 @@
 services:
-  drone:
+  rover:
     build: .
     network_mode: host
     privileged: true
