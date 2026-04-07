@@ -36,7 +36,7 @@ WORKDIR /root
 # --branch v1.15.0 --depth 1 
 RUN git clone https://github.com/jacob-slot/PX4-Autopilot-P6.git --recursive && \
 	bash ./PX4-Autopilot-P6/Tools/setup/ubuntu.sh && \
-	cd PX4-Autopilot/ && \
+	cd PX4-Autopilot-P6/ && \
 	make px4_sitl
 	
 # RUN apt install -y ros-humble-ros-gzgarden
