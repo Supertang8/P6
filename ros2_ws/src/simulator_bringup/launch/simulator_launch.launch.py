@@ -13,7 +13,7 @@ def generate_launch_description():
         ExecuteProcess(
             cmd=[
                 "bash", "-c",
-                f"cd {PX4_DIR} && PX4_GZ_WORLD=leo_p6 make px4_sitl gz_x500"
+                f"cd {PX4_DIR} && PX4_GZ_WORLD=leo_p6 make px4_sitl gz_x500_lidar_front"
             ],
             output="screen"
         ),

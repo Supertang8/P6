@@ -21,12 +21,14 @@ RUN apt update && \
 	    ros-humble-tf2-ros \
 	    ros-humble-tf2-eigen \
 	    ros-humble-rviz2 \
+        ros-humble-ros-gz \
         ros-humble-octomap \
         ros-humble-octomap-msgs \
         ros-humble-octomap-server \
         ros-humble-octomap-rviz-plugins \
         ros-humble-navigation2 \
 	ros-humble-nav2-bringup \
+        ros-humble-teleop-twist-keyboard \
     && rm -rf /var/lib/apt/lists/*
 
 # Initialize rosdep

@@ -28,7 +28,7 @@ from launch.actions import DeclareLaunchArgument
 from launch.actions import IncludeLaunchDescription
 from launch.actions import TimerAction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import LaunchConfiguration, TextSubstitution
 from launch_ros.actions import Node
 
 
@@ -55,7 +55,9 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(
             os.path.join(pkg_ros_gz_sim, "launch", "gz_sim.launch.py")
         ),
-        launch_arguments={"gz_args": LaunchConfiguration("sim_world")}.items(),
+        launch_arguments={
+            "gz_args": [LaunchConfiguration("sim_world"), " -r"],
+        }.items(),
     )
 
     
@@ -88,6 +90,32 @@ def generate_launch_description():
         output="screen",
     )
 
+    converter_node = TimerAction(
+        period=5.0,  # wait 5 seconds after Gazebo starts
+        actions=[
+            Node(
+                package="livox_converter",
+                executable="pc2_to_livox",
+                name="pc2_to_livox",
+                output="screen",
+                parameters=[{'use_sim_time': True}],
+            )
+        ],
+    )
+
+    imu_node = TimerAction(
+        period=5.0,  # wait 5 seconds after Gazebo starts
+        actions=[
+            Node(
+                package="livox_converter",
+                executable="livox_imu",
+                name="livox_imu",
+                output="screen",
+                parameters=[{'use_sim_time': True}],
+            )
+        ],
+    )
+
     return LaunchDescription(
         [
             sim_world,
@@ -95,5 +123,7 @@ def generate_launch_description():
             gz_sim,
             spawn_robot,
             topic_bridge,
+            converter_node,
+            imu_node,
         ]
     )

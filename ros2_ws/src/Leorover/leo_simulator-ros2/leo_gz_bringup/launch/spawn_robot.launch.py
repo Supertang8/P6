@@ -103,19 +103,10 @@ def spawn_robot(context: LaunchContext, namespace: LaunchConfiguration):
         output="screen",
     )
 
-    # Camera image bridge
-    image_bridge = Node(
-        package="ros_gz_image",
-        executable="image_bridge",
-        name=node_name_prefix + "image_bridge",
-        arguments=[robot_ns + "/camera/image_raw"],
-        output="screen",
-    )
     return [
         robot_state_publisher,
         leo_rover,
         topic_bridge,
-        image_bridge,
     ]
 
 
