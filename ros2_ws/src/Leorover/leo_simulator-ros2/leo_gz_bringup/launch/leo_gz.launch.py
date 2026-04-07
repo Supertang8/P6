@@ -97,6 +97,20 @@ def generate_launch_description():
                 executable="pc2_to_livox",
                 name="pc2_to_livox",
                 output="screen",
+                parameters=[{'use_sim_time': True}],
+            )
+        ],
+    )
+
+    imu_node = TimerAction(
+        period=5.0,  # wait 5 seconds after Gazebo starts
+        actions=[
+            Node(
+                package="livox_converter",
+                executable="livox_imu",
+                name="livox_imu",
+                output="screen",
+                parameters=[{'use_sim_time': True}],
             )
         ],
     )
@@ -109,5 +123,6 @@ def generate_launch_description():
             spawn_robot,
             topic_bridge,
             converter_node,
+            imu_node,
         ]
     )

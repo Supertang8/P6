@@ -25,6 +25,7 @@ setup(
     entry_points={
         'console_scripts': [
             'pc2_to_livox = livox_converter.pc2_to_livox:main',
+            'livox_imu = livox_converter.livox_imu:main',
         ],
     },
 )

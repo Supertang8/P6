@@ -26,19 +26,6 @@ class PC2ToLivox(Node):
             10
         )
 
-        self.imu_sub = self.create_subscription(
-            Imu,
-            '/imu/data_raw',
-            self.imu_callback,
-            10
-        )
-
-        self.imu_pub = self.create_publisher(
-            Imu,
-            '/livox/imu',
-            10
-        )
-
     def lidar_callback(self, msg):
         livox_msg = CustomMsg()
 
@@ -80,18 +67,6 @@ class PC2ToLivox(Node):
         livox_msg.point_num = len(points)
 
         self.pub.publish(livox_msg)
-
-    def imu_callback(self, msg):
-        imu_msg = Imu()
-        imu_msg.header = msg.header
-        imu_msg.orientation = msg.orientation
-        imu_msg.orientation_covariance = msg.orientation_covariance
-        imu_msg.angular_velocity = msg.angular_velocity
-        imu_msg.angular_velocity_covariance = msg.angular_velocity_covariance
-        imu_msg.linear_acceleration = msg.linear_acceleration
-        imu_msg.linear_acceleration_covariance = msg.linear_acceleration_covariance
-        self.imu_pub.publish(imu_msg)
-
 
 
 def main(args=None):

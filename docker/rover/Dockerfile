@@ -26,6 +26,7 @@ RUN apt update && \
         ros-humble-octomap-msgs \
         ros-humble-octomap-server \
         ros-humble-octomap-rviz-plugins \
+        ros-humble-teleop-twist-keyboard \
     && rm -rf /var/lib/apt/lists/*
 
 # Initialize rosdep

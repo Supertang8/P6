@@ -544,7 +544,7 @@
     <!-- lidar -->
     <gazebo reference="${link_prefix}lidar_link">
       <sensor name="leo_3d_lidar" type="gpu_lidar">
-        <update_rate>10</update_rate>
+        <update_rate>50</update_rate>
         <always_on>1</always_on>
         <visualize>true</visualize>
 
@@ -577,7 +577,7 @@
           <noise>
             <type>gaussian</type>
             <mean>0.0</mean>
-            <stddev>0.01</stddev>
+            <stddev>0.00001</stddev>
           </noise>
         </lidar>
       </sensor>
@@ -602,7 +602,7 @@
 
     <gazebo reference="${link_prefix}imu_frame">
       <sensor type="imu" name="leo_imu_sensor">
-        <update_rate>100</update_rate>
+        <update_rate>500</update_rate>
         <visualize>true</visualize>
         <topic>${link_prefix}imu/data_raw</topic>
         <always_on>1</always_on>
