@@ -40,14 +40,15 @@ RUN rosdep update
 # Auto-source ROS
 RUN echo "source /opt/ros/humble/setup.bash" >> /root/.bashrc
 RUN echo "source /root/ros2_ws/install/setup.bash" >> /root/.bashrc 
-RUN echo "alias cb='colcon build --packages-select livox_ros_driver2 px4_msgs px4_controller system_package fast_lio'" >> /root/.bashrc 
+RUN echo "alias cb='colcon build --packages-select livox_ros_driver2 px4_msgs px4_controller drone_controller system_package fast_lio'" >> /root/.bashrc 
 
 
 # Install Livox SDK
 WORKDIR /root
 RUN git clone https://github.com/Livox-SDK/Livox-SDK2.git && \
-    mkdir -p Livox-SDK2/build && \
-    cd Livox-SDK2/build && \
+    mkdir -p Livox-SDK2/build 
+    
+RUN cd Livox-SDK2/build && \
     cmake .. && \
     make -j$(nproc) && \
     make install && \
