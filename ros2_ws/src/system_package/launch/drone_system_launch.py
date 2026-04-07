@@ -26,7 +26,7 @@ def generate_launch_description():
     # Get the path to livox_ros_driver2 package
     livox_package_path = FindPackageShare('livox_ros_driver2')
     livox_launch_file = PythonLaunchDescriptionSource([
-        livox_package_path, '/launch/msg_MID360_launch_drone.py'
+        livox_package_path, '/launch/msg_MID360_drone_launch.py'
     ])
     
     # Pointcloud aggregator node

@@ -10,7 +10,8 @@ MicroXRCEAgent serial --dev /dev/ttyAMA0 -b 921600 &
 
 # Launch ROS2 script
 ros2 run px4_ros_com offboard_control_pos &
-ros2 launch livox_ros_driver2 msg_MID360_drone_launch.py
+ros2 launch livox_ros_driver2 msg_MID360_drone_launch.py &
+ros2 launch fast_lio mapping.launch.py config_file:=mid360drone.yaml rviz:=false
 
 # Keep the container running
 wait
