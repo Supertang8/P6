@@ -48,7 +48,7 @@ RUN rosdep update
 
 # Auto-source ROS
 RUN echo "source /opt/ros/humble/setup.bash" >> /root/.bashrc
-RUN echo "source /root/ws/install/setup.bash" >> /root/.bashrc
+RUN echo "source /root/ros2_ws/install/setup.bash" >> /root/.bashrc
 RUN echo "alias cb='colcon build --packages-select px4_msgs px4_ros2_cpp drone_controller px4_controller'" >> /root/.bashrc 
 
 #Remove list
