@@ -581,7 +581,7 @@
           </noise>
         </ray>
       </sensor>
-</gazebo>
+    </gazebo>
 
     <!-- rocker differential -->
     <gazebo>
@@ -600,6 +600,19 @@
       </plugin>
     </gazebo>
 
+    <!-- lidar -->
+    <gazebo>
+      <plugin filename="libgz-sim-sensors-system.so"
+              name="gz::sim::systems::Sensors"/>
+    </gazebo>
+
+    <!-- imu -->
+    <gazebo>
+        <plugin filename="gz-sim-imu-system"
+              name="gz::sim::systems::Imu">
+      </plugin>
+    </gazebo>  
+
     <gazebo reference="${link_prefix}imu_frame">
       <sensor type="imu" name="leo_imu_sensor">
         <update_rate>500</update_rate>
@@ -609,8 +622,8 @@
         <gz_frame_id>${link_prefix}imu_frame</gz_frame_id>
       </sensor>
     </gazebo>
-    <gazebo>
     
+    <gazebo>
       <plugin
         filename="libgz-sim-diff-drive-system.so"
         name="gz::sim::systems::DiffDrive">

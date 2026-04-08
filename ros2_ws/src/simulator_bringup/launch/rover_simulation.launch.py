@@ -13,7 +13,7 @@ def generate_launch_description():
     # Path to fast_lio launch file
     fast_lio_pkg = get_package_share_directory('fast_lio')
     fast_lio_launch = os.path.join(fast_lio_pkg, 'launch', 'mapping.launch.py')
-    fast_lio_config = os.path.expanduser('~/deps_ws/src/FAST_LIO/config/mid360.yaml')
+    fast_lio_config = os.path.expanduser('~/ros2_ws/src/FAST_LIO/config/mid360.yaml')
 
     return LaunchDescription([
         # Launch leo_gz
