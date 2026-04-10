@@ -25,6 +25,7 @@ setup(
     entry_points={
         'console_scripts': [
         'send_setpoints = drone_controller.send_setpoints:main',
+        'velocityController = drone_controller.velocityController:main'
         ],
     },
 )

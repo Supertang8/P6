@@ -35,4 +35,9 @@ add_executable(offboard_control_pos src/offboard_control_pos.cpp)
 target_link_libraries(offboard_control_pos PUBLIC Eigen3::Eigen px4_ros2_cpp::px4_ros2_cpp rclcpp::rclcpp ${geometry_msgs_TARGETS})
 install(TARGETS offboard_control_pos DESTINATION lib/${PROJECT_NAME})
 
+# Tobias' hjemmebyggede velocity til drone
+add_executable(velocityToDrone src/velocityToDrone.cpp)
+target_link_libraries(velocityToDrone PUBLIC Eigen3::Eigen px4_ros2_cpp::px4_ros2_cpp rclcpp::rclcpp ${geometry_msgs_TARGETS})
+install(TARGETS velocityToDrone DESTINATION lib/${PROJECT_NAME})
+
 ament_package()
