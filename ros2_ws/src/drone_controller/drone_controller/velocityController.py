@@ -18,8 +18,17 @@ class VelocityController(Node):
         self.current_pos = None
 
         # P-controller gains
-        self.kp_xy = 0.5  # Proportional gain for x and y
-        self.kp_z = 0.5   # Proportional gain for z
+        self.kp_xy = 1  # Proportional gain for x and y
+        self.kp_z = 1  # Proportional gain for z
+
+        # I-controller gains
+        self.ki_xy = 0.1  # Integral gain for x and y
+        self.ki_z = 0.2  # Integral gain for z
+
+        # I-controller error accumulators
+        self.integral_error_x = 0.0
+        self.integral_error_y = 0.0
+        self.integral_error_z = 0.0
 
         qos = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
@@ -62,23 +71,49 @@ class VelocityController(Node):
         if self.desired_pose is None or self.current_pos is None:
             return
 
-        # Extract positions
+        # Extract position differences
         dx = self.desired_pose.pose.position.x - self.current_pos[0]
         dy = self.desired_pose.pose.position.y - self.current_pos[1]
         dz = self.desired_pose.pose.position.z - self.current_pos[2]
 
-        # P-controller
-        vx = self.kp_xy * dx
-        vy = self.kp_xy * dy
-        vz = self.kp_z * dz
+        #print dx, dy, dz
+        #self.get_logger().info(f"Position error: dx={dx:.2f}, dy={dy:.2f}, dz={dz:.2f}")
+
+        # P-gains
+        px = self.kp_xy * dx
+        py = self.kp_xy * dy
+        pz = self.kp_z * dz
+        
+        # I-gains
+        self.integral_error_x += dx * self.ki_xy
+        self.integral_error_y += dy * self.ki_xy
+        self.integral_error_z += dz * self.ki_z
+        # Anti-windup: limit the integral error to prevent excessive accumulation
+        max_integral = 1.0  # Maximum integral term
+        self.integral_error_x = max(min(self.integral_error_x, max_integral), -max_integral)
+        self.integral_error_y = max(min(self.integral_error_y, max_integral), -max_integral)
+        self.integral_error_z = max(min(self.integral_error_z, max_integral), -max_integral)
+
+        #Control signal 
+        ux = px + self.integral_error_x
+        uy = py + self.integral_error_y
+        uz = pz + self.integral_error_z
+
+        # Velocity limits
+        max_vel_xy = 2.0  # m/s
+        max_vel_z = 1.0   # m/s
+        ux = max(min(ux, max_vel_xy), -max_vel_xy)
+        uy = max(min(uy, max_vel_xy), -max_vel_xy)
+        uz = max(min(uz, max_vel_z), -max_vel_z)
+      
 
         # Create velocity message
         twist_msg = TwistStamped()
         twist_msg.header.stamp = self.get_clock().now().to_msg()
         twist_msg.header.frame_id = "map"
-        twist_msg.twist.linear.x = vx
-        twist_msg.twist.linear.y = vy
-        twist_msg.twist.linear.z = vz
+        twist_msg.twist.linear.x = ux
+        twist_msg.twist.linear.y = uy
+        twist_msg.twist.linear.z = uz
         twist_msg.twist.angular.x = 0.0
         twist_msg.twist.angular.y = 0.0
         twist_msg.twist.angular.z = 0.0
