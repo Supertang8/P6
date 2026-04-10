@@ -1,211 +1,62 @@
-/****************************************************************************
- *
- * Copyright 2023 PX4 Development Team. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice,
- *    this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * 3. Neither the name of the copyright holder nor the names of its
- *    contributors may be used to endorse or promote products derived from
- *    this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- *
- ****************************************************************************/
-
-/**
- * @brief Offboard velocity control node
- * @file velocityToDrone.cpp
- * 
- * Receives velocity commands and sends them to the PX4 autopilot.
- */
-
-#include <px4_msgs/msg/offboard_control_mode.hpp>
-#include <px4_msgs/msg/trajectory_setpoint.hpp>
-#include <px4_msgs/msg/vehicle_command.hpp>
-#include <rclcpp/rclcpp.hpp>
+#include <Eigen/Core>
 #include <geometry_msgs/msg/twist_stamped.hpp>
+#include <px4_ros2/components/mode.hpp>
+#include <px4_ros2/components/node_with_mode.hpp>
+#include <px4_ros2/control/setpoint_types/experimental/trajectory.hpp>
+#include <rclcpp/rclcpp.hpp>
 
-#include <chrono>
-#include <iostream>
+static const std::string kModeName = "Offboard Vel Setpoint";
 
-using namespace std::chrono;
-using namespace std::chrono_literals;
-using namespace px4_msgs::msg;
-
-class VelocityController : public rclcpp::Node
+class VelocityMode : public px4_ros2::ModeBase
 {
 public:
-	VelocityController() : Node("velocity_controller")
-	{
-		// Create publishers for PX4
-		offboard_control_mode_publisher_ = this->create_publisher<OffboardControlMode>(
-			"/fmu/in/offboard_control_mode", 10);
-		trajectory_setpoint_publisher_ = this->create_publisher<TrajectorySetpoint>(
-			"/fmu/in/trajectory_setpoint", 10);
-		vehicle_command_publisher_ = this->create_publisher<VehicleCommand>(
-			"/fmu/in/vehicle_command", 10);
+  explicit VelocityMode(rclcpp::Node & node)
+  : ModeBase(node, Settings{kModeName})
+  {
+    _velocity_setpoint =
+      std::make_shared<px4_ros2::TrajectorySetpointType>(*this);
 
-		// Create subscription for velocity commands
-		velocity_sub_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
-			"offboard/velocity", rclcpp::QoS(1).best_effort(),
-			[this](const geometry_msgs::msg::TwistStamped::SharedPtr msg) {
-				current_velocity_x_ = msg->twist.linear.x;
-				current_velocity_y_ = msg->twist.linear.y;
-				current_velocity_z_ = msg->twist.linear.z;
-				current_yaw_rate_ = msg->twist.angular.z;
-			});
+    _twist_sub = node.create_subscription<geometry_msgs::msg::TwistStamped>(
+      "/offboard/velocity", rclcpp::QoS(1).best_effort(),
+      [this](const geometry_msgs::msg::TwistStamped::SharedPtr msg) {
+        _velocity_ned = Eigen::Vector3f{
+          static_cast<float>(msg->twist.linear.x),
+          static_cast<float>(msg->twist.linear.y),
+          static_cast<float>(msg->twist.linear.z)
+        };
+        _yaw_rate_rad_s = static_cast<float>(msg->twist.angular.z);
+      });
+  }
 
-		offboard_setpoint_counter_ = 0;
+  void onActivate() override
+  {
+    RCLCPP_INFO(
+      node().get_logger(),
+      "VelocityMode activated, listening for velocity commands on '/offboard/velocity'");
+  }
 
-		auto timer_callback = [this]() -> void {
-
-			if (offboard_setpoint_counter_ == 10) {
-				// Change to Offboard mode after 10 setpoints
-				this->publish_vehicle_command(VehicleCommand::VEHICLE_CMD_DO_SET_MODE, 1, 6);
-
-				// Arm the vehicle
-				this->arm();
-
-				RCLCPP_INFO(this->get_logger(), "Vehicle armed and in offboard mode");
-			}
-
-			// offboard_control_mode needs to be paired with trajectory_setpoint
-			publish_offboard_control_mode();
-			publish_trajectory_setpoint();
-
-			// stop the counter after reaching 11
-			if (offboard_setpoint_counter_ < 11) {
-				offboard_setpoint_counter_++;
-			}
-		};
-		timer_ = this->create_wall_timer(100ms, timer_callback);
-	}
-
-	void arm();
-	void disarm();
+  void updateSetpoint(float /*dt_s*/) override
+  {
+    // TrajectorySetpointType takes velocity only; yaw-rate is not separately
+    // controllable through this type — heading will be managed by PX4 internally.
+    _velocity_setpoint->update(_velocity_ned);
+  }
 
 private:
-	rclcpp::TimerBase::SharedPtr timer_;
+  // Default: hover in place until the first message arrives
+  Eigen::Vector3f _velocity_ned{0.f, 0.f, 0.f};
+  float           _yaw_rate_rad_s{0.f};
 
-	rclcpp::Publisher<OffboardControlMode>::SharedPtr offboard_control_mode_publisher_;
-	rclcpp::Publisher<TrajectorySetpoint>::SharedPtr trajectory_setpoint_publisher_;
-	rclcpp::Publisher<VehicleCommand>::SharedPtr vehicle_command_publisher_;
-	rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr velocity_sub_;
-
-	// Current velocity commands (in NED frame)
-	float current_velocity_x_{0.0f};
-	float current_velocity_y_{0.0f};
-	float current_velocity_z_{0.0f};
-	float current_yaw_rate_{0.0f};
-	float current_yaw_{0.0f};
-
-	uint64_t offboard_setpoint_counter_;
-
-	void publish_offboard_control_mode();
-	void publish_trajectory_setpoint();
-	void publish_vehicle_command(uint16_t command, float param1 = 0.0, float param2 = 0.0);
+  std::shared_ptr<px4_ros2::TrajectorySetpointType>                   _velocity_setpoint;
+  rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr   _twist_sub;
 };
-
-/**
- * @brief Send a command to Arm the vehicle
- */
-void VelocityController::arm()
-{
-	publish_vehicle_command(VehicleCommand::VEHICLE_CMD_COMPONENT_ARM_DISARM, 1.0);
-
-	RCLCPP_INFO(this->get_logger(), "Arm command sent");
-}
-
-/**
- * @brief Send a command to Disarm the vehicle
- */
-void VelocityController::disarm()
-{
-	publish_vehicle_command(VehicleCommand::VEHICLE_CMD_COMPONENT_ARM_DISARM, 0.0);
-
-	RCLCPP_INFO(this->get_logger(), "Disarm command sent");
-}
-
-/**
- * @brief Publish the offboard control mode.
- *        For velocity control, set velocity to true.
- */
-void VelocityController::publish_offboard_control_mode()
-{
-	OffboardControlMode msg{};
-	msg.position = false;
-	msg.velocity = true;
-	msg.acceleration = false;
-	msg.attitude = false;
-	msg.body_rate = false;
-	msg.timestamp = this->get_clock()->now().nanoseconds() / 1000;
-	offboard_control_mode_publisher_->publish(msg);
-}
-
-/**
- * @brief Publish a trajectory setpoint with velocity commands
- *        Sends the current velocity commands received from the subscription.
- *        Integrates yaw_rate to update heading angle.
- */
-void VelocityController::publish_trajectory_setpoint()
-{
-	TrajectorySetpoint msg{};
-	msg.velocity = {current_velocity_x_, current_velocity_y_, current_velocity_z_};
-	
-	// Integrate yaw rate (100ms timer period = 0.1s)
-	current_yaw_ += current_yaw_rate_ * 0.1f;
-	msg.yaw = current_yaw_;
-	
-	msg.timestamp = this->get_clock()->now().nanoseconds() / 1000;
-	trajectory_setpoint_publisher_->publish(msg);
-}
-
-/**
- * @brief Publish vehicle commands
- * @param command   Command code (matches VehicleCommand and MAVLink MAV_CMD codes)
- * @param param1    Command parameter 1
- * @param param2    Command parameter 2
- */
-void VelocityController::publish_vehicle_command(uint16_t command, float param1, float param2)
-{
-	VehicleCommand msg{};
-	msg.param1 = param1;
-	msg.param2 = param2;
-	msg.command = command;
-	msg.target_system = 1;
-	msg.target_component = 1;
-	msg.source_system = 1;
-	msg.source_component = 1;
-	msg.from_external = true;
-	msg.timestamp = this->get_clock()->now().nanoseconds() / 1000;
-	vehicle_command_publisher_->publish(msg);
-}
 
 int main(int argc, char * argv[])
 {
-	std::cout << "Starting velocity controller node..." << std::endl;
-	setvbuf(stdout, NULL, _IONBF, BUFSIZ);
-	rclcpp::init(argc, argv);
-	rclcpp::spin(std::make_shared<VelocityController>());
-
-	rclcpp::shutdown();
-	return 0;
+  setvbuf(stdout, NULL, _IONBF, BUFSIZ);
+  rclcpp::init(argc, argv);
+  rclcpp::spin(
+    std::make_shared<px4_ros2::NodeWithMode<VelocityMode>>("velocityToDrone", true));
+  rclcpp::shutdown();
+  return 0;
 }

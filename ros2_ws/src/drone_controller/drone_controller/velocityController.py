@@ -18,12 +18,12 @@ class VelocityController(Node):
         self.current_pos = None
 
         # P-controller gains
-        self.kp_xy = 1  # Proportional gain for x and y
-        self.kp_z = 1  # Proportional gain for z
+        self.kp_xy = 0.7  # Proportional gain for x and y
+        self.kp_z = 0.7  # Proportional gain for z
 
         # I-controller gains
-        self.ki_xy = 0.1  # Integral gain for x and y
-        self.ki_z = 0.2  # Integral gain for z
+        self.ki_xy = 0#0.01  # Integral gain for x and y
+        self.ki_z = 0#0.02  # Integral gain for z
 
         # I-controller error accumulators
         self.integral_error_x = 0.0
