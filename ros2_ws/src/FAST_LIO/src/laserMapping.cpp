@@ -89,34 +89,14 @@ string map_file_path, lid_topic, imu_topic;
 string camera_init_frame = "camera_init";
 string body_frame = "body";
 
-string sanitize_topic_suffix(const string &raw)
+string normalize_relative_topic(const string &topic)
 {
-    string cleaned;
-    cleaned.reserve(raw.size());
-    for (char c : raw)
+    size_t start = 0;
+    while (start < topic.size() && topic[start] == '/')
     {
-        if ((c >= 'a' && c <= 'z') ||
-            (c >= 'A' && c <= 'Z') ||
-            (c >= '0' && c <= '9') ||
-            c == '_')
-        {
-            cleaned.push_back(c);
-        }
-        else if (c == '.' || c == ':' || c == '-' || c == '/')
-        {
-            cleaned.push_back('_');
-        }
+        ++start;
     }
-    return cleaned;
-}
-
-string append_topic_suffix(const string &topic, const string &suffix)
-{
-    if (suffix.empty())
-    {
-        return topic;
-    }
-    return topic + "_" + suffix;
+    return topic.substr(start);
 }
 
 double res_mean_last = 0.05, total_residual = 0.0;
@@ -840,7 +820,6 @@ public:
         this->declare_parameter<string>("map_file_path", "");
         this->declare_parameter<string>("common.lid_topic", "/livox/lidar");
         this->declare_parameter<string>("common.imu_topic", "/livox/imu");
-        this->declare_parameter<string>("common.ip_address", "");
         this->declare_parameter<bool>("common.time_sync_en", false);
         this->declare_parameter<double>("common.time_offset_lidar_to_imu", 0.0);
         this->declare_parameter<double>("filter_size_corner", 0.5);
@@ -877,8 +856,6 @@ public:
         this->get_parameter_or<string>("map_file_path", map_file_path, "");
         this->get_parameter_or<string>("common.lid_topic", lid_topic, "/livox/lidar");
         this->get_parameter_or<string>("common.imu_topic", imu_topic,"/livox/imu");
-        string ip_address;
-        this->get_parameter_or<string>("common.ip_address", ip_address, "");
         this->get_parameter_or<bool>("common.time_sync_en", time_sync_en, false);
         this->get_parameter_or<double>("common.time_offset_lidar_to_imu", time_diff_lidar_to_imu, 0.0);
         this->get_parameter_or<double>("filter_size_corner",filter_size_corner_min,0.5);
@@ -905,19 +882,16 @@ public:
         this->get_parameter_or<vector<double>>("mapping.extrinsic_T", extrinT, vector<double>());
         this->get_parameter_or<vector<double>>("mapping.extrinsic_R", extrinR, vector<double>());
 
-        const string topic_suffix = sanitize_topic_suffix(ip_address);
-        lid_topic = append_topic_suffix(lid_topic, topic_suffix);
-        imu_topic = append_topic_suffix(imu_topic, topic_suffix);
-        const string cloud_registered_topic = append_topic_suffix("/cloud_registered", topic_suffix);
-        const string cloud_registered_body_topic = append_topic_suffix("/cloud_registered_body", topic_suffix);
-        const string cloud_effected_topic = append_topic_suffix("/cloud_effected", topic_suffix);
-        const string laser_map_topic = append_topic_suffix("/Laser_map", topic_suffix);
-        const string odometry_topic = append_topic_suffix("/Odometry", topic_suffix);
-        const string path_topic = append_topic_suffix("/path", topic_suffix);
-        camera_init_frame = append_topic_suffix("camera_init", topic_suffix);
-        body_frame = append_topic_suffix("body", topic_suffix);
+        lid_topic = normalize_relative_topic(lid_topic);
+        imu_topic = normalize_relative_topic(imu_topic);
+        const string cloud_registered_topic = "cloud_registered";
+        const string cloud_registered_body_topic = "cloud_registered_body";
+        const string cloud_effected_topic = "cloud_effected";
+        const string laser_map_topic = "Laser_map";
+        const string odometry_topic = "Odometry";
+        const string path_topic = "path";
 
-        RCLCPP_INFO(this->get_logger(), "Using topic suffix: '%s'", topic_suffix.c_str());
+        RCLCPP_INFO(this->get_logger(), "Using namespace-aware relative topics");
         RCLCPP_INFO(this->get_logger(), "LiDAR topic: %s", lid_topic.c_str());
         RCLCPP_INFO(this->get_logger(), "IMU topic: %s", imu_topic.c_str());
 

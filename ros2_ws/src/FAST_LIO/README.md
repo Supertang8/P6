@@ -123,14 +123,14 @@ For MID360 with one shared config, keep LiDAR/IMU topics in `mid360.yaml` instea
 ros2 launch fast_lio mapping.launch.py config_file:=mid360.yaml
 ```
 
-You can also append an IP suffix to all FAST-LIO subscribed/published topic names:
+You can also isolate all FAST-LIO topics with a ROS namespace:
 
 ```bash
-ros2 launch fast_lio mapping.launch.py config_file:=mid360.yaml ip_address:=192.168.1.122
+ros2 launch fast_lio mapping.launch.py config_file:=mid360.yaml namespace:=robot1
 ```
 
-Example: `/livox/lidar` -> `/livox/lidar_192_168_1_122`, `/Odometry` -> `/Odometry_192_168_1_122`.
-RViz topic subscriptions are updated automatically with the same suffix when launched via `mapping.launch.py`.
+Example: `livox/lidar` resolves to `/robot1/livox/lidar`, and `Odometry` resolves to `/robot1/Odometry`.
+RViz subscriptions in `mapping.launch.py` follow the same namespace.
 
 Launch livox ros driver. Use MID360 as an example.
 
