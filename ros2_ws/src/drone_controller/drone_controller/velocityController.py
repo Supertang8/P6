@@ -18,17 +18,24 @@ class VelocityController(Node):
         self.current_pos = None
 
         # P-controller gains
-        self.kp_xy = 0.7  # Proportional gain for x and y
-        self.kp_z = 0.7  # Proportional gain for z
+        self.kp_xy = 0.9  # Proportional gain for x and y
+        self.kp_z = 2.5  # Proportional gain for z
 
         # I-controller gains
         self.ki_xy = 0#0.01  # Integral gain for x and y
         self.ki_z = 0#0.02  # Integral gain for z
-
         # I-controller error accumulators
         self.integral_error_x = 0.0
         self.integral_error_y = 0.0
         self.integral_error_z = 0.0
+
+        # D-controller gains
+        self.kd_xy = 0.95#1.3  # Derivative gain for x and y
+        self.kd_z = 1#0.95#1.3  # Derivative gain for z
+        # D-controller error accumulators
+        self.prev_error_x = 0.0
+        self.prev_error_y = 0.0
+        self.prev_error_z = 0.0
 
         qos = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
@@ -90,17 +97,28 @@ class VelocityController(Node):
         self.integral_error_z += dz * self.ki_z
         # Anti-windup: limit the integral error to prevent excessive accumulation
         max_integral = 1.0  # Maximum integral term
-        self.integral_error_x = max(min(self.integral_error_x, max_integral), -max_integral)
-        self.integral_error_y = max(min(self.integral_error_y, max_integral), -max_integral)
-        self.integral_error_z = max(min(self.integral_error_z, max_integral), -max_integral)
+        ix = max(min(self.integral_error_x, max_integral), -max_integral)
+        iy = max(min(self.integral_error_y, max_integral), -max_integral)
+        iz = max(min(self.integral_error_z, max_integral), -max_integral)
+
+        # D-error
+        d_error_x = dx - self.prev_error_x
+        d_error_y = dy - self.prev_error_y
+        d_error_z = dz - self.prev_error_z
+        self.prev_error_x = dx
+        self.prev_error_y = dy
+        self.prev_error_z = dz
+        dx = self.kd_xy * d_error_x
+        dy = self.kd_xy * d_error_y
+        dz = self.kd_z * d_error_z
 
         #Control signal 
-        ux = px + self.integral_error_x
-        uy = py + self.integral_error_y
-        uz = pz + self.integral_error_z
+        ux = px + ix + dx
+        uy = py + iy + dy
+        uz = pz + iz + dz
 
         # Velocity limits
-        max_vel_xy = 2.0  # m/s
+        max_vel_xy = 5.0  # m/s
         max_vel_z = 1.0   # m/s
         ux = max(min(ux, max_vel_xy), -max_vel_xy)
         uy = max(min(uy, max_vel_xy), -max_vel_xy)
