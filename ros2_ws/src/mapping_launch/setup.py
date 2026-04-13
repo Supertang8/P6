@@ -25,6 +25,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+		'ground_filter_node = mapping_launch.ground_filter_node:main',
 	],
     },
 )

@@ -48,7 +48,7 @@ def _build_launch_actions(context, fast_lio_launch_path):
 	'-p', 'odom_topic:=/Odometry_' + sanitized_ip_address,
 	'-p', 'frame_id:=odom_' + sanitized_ip_address,
 	'-p', 'child_frame_id:=base_link_' + sanitized_ip_address,
-	'-p', 'use_yaw_only:=true'
+    '-p', 'use_yaw_only:=false'
 	],
     )
 
@@ -62,6 +62,25 @@ def _build_launch_actions(context, fast_lio_launch_path):
         }.items(),
     )
 
+    ground_filter = Node(
+        package='mapping_launch',
+        executable='ground_filter_node',
+        name='ground_filter_node',
+        output='screen',
+        parameters=[{
+			'input_cloud_topic': '/cloud_registered_' + sanitized_ip_address,
+			'odom_topic': '/Odometry_' + sanitized_ip_address,
+			'output_topic': '/cloud_ground_filtered_body_' + sanitized_ip_address,
+			'output_frame_id': 'body_' + sanitized_ip_address,
+			'ground_roi_radius': 6.0,
+			'ground_percentile': 12.0,
+			'ground_clearance': 0.28,
+            'max_above_ground': 1.0,
+			'min_range': 0.8,
+			'max_range': 20.0,
+        }],
+    )
+
     # Octomap (delayed to avoid TF issues)
     octomap = TimerAction(
         period=2.0,  # wait 2 seconds before starting
@@ -72,23 +91,22 @@ def _build_launch_actions(context, fast_lio_launch_path):
                 name='octomap_server',
                 output='screen',
                 parameters=[{
-			'frame_id': 'odom_' + sanitized_ip_address,
-			'resolution': 0.1,
-			'base_frame_id': 'base_link_' + sanitized_ip_address,
+			'frame_id': 'camera_init_' + sanitized_ip_address,
+			'resolution': 0.05,
+            # Use FAST-LIO body frame as base for ground filtering to keep roll/pitch consistent.
+            'base_frame_id': 'body_' + sanitized_ip_address,
 
 			'filter_speckles': True,
 
-			'filter_ground_plane': True,
-			'ground_filter.angle': 0.1,
-			'ground_filter.distance': 0.3,
-			'ground_filter.plane_distance': 0.1,
+			'filter_ground_plane': False,
 
-			'sensor_model.max_range': 8.0,
-			'point_cloud_max_z': 1.2,
-			'point_cloud_min_z': 0.0
+            'sensor_model.max_range': 20.0,
+            'sensor_model.min_range': 0.8,
+            'point_cloud_max_z': 2.5,
+            'point_cloud_min_z': -1.5
                 }],
                 remappings=[
-                    ('cloud_in', '/cloud_registered_body_' + sanitized_ip_address),
+                    ('cloud_in', '/cloud_ground_filtered_body_' + sanitized_ip_address),
                     ('/projected_map', '/project_map_' + sanitized_ip_address),
                     ('/octomap_binary', '/octomap_binary_' + sanitized_ip_address),
                     ('/octomap_full', '/octomap_full_' + sanitized_ip_address),
@@ -104,6 +122,7 @@ def _build_launch_actions(context, fast_lio_launch_path):
         odom_2_camera_init,
         odom_2_base_link,
         fastlio,
+        ground_filter,
         octomap,
     ]
 
