@@ -7,9 +7,9 @@ from ament_index_python.packages import get_package_share_directory
 import os
 
 def generate_launch_description():
-    # Path to leo_gz_bringup launch file
-    leo_gz_pkg = get_package_share_directory('leo_gz_bringup')
-    leo_gz_launch = os.path.join(leo_gz_pkg, 'launch', 'leo_gz.launch.py')
+
+    livox_pkg = get_package_share_directory('livox_ros_driver2')
+    livox_launch = os.path.join(livox_pkg, 'launch', 'msg_MID360_rover_launch.py')
 
     # Path to fast_lio launch file
     fast_lio_pkg = get_package_share_directory('fast_lio')
@@ -28,15 +28,16 @@ def generate_launch_description():
                 executable="octomap_converter",
                 name="octomap_converter",
                 output="screen",
-                parameters=[{'use_sim_time': True}],
+                parameters=[{'use_sim_time': False}],
             )
         ],
     )
 
     return LaunchDescription([
-        # Launch leo_gz
+        
+        # Launch Livox ROS Driver
         IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(leo_gz_launch),
+            PythonLaunchDescriptionSource(livox_launch),
         ),
 
         # Launch fast_lio with config_file argument
@@ -92,3 +93,11 @@ def generate_launch_description():
 
         odom_node,
     ])
+"""        
+Node(
+    package='tf2_ros',
+    executable='static_transform_publisher',
+    name='base_link_to_odom_tf',
+    arguments=['0', '0', '0', '0', '0', '0', 'base_link', 'odom'],
+    output='screen'
+),"""

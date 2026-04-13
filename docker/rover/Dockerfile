@@ -37,7 +37,7 @@ RUN rosdep update
 
 # Auto-source ROS
 RUN echo "source /opt/ros/humble/setup.bash" >> /root/.bashrc
-RUN echo "alias cb='cd /root/ros2_ws && colcon build --packages-select livox_ros_driver2 fast_lio system_package mapping_launch livox_converter leo leo_msgs leo_teleop leo_description leo_gz_bringup leo_gz_plugins leo_gz_worlds leo_simulator leo_simulator simulator_bringup '" >> /root/.bashrc
+RUN echo "alias cb='cd /root/ros2_ws && colcon build --packages-select livox_ros_driver2 fast_lio system_package mapping_launch livox_converter leo leo_msgs leo_teleop leo_description leo_gz_bringup leo_gz_plugins leo_gz_worlds leo_simulator leo_simulator simulator_bringup mapping_launch'" >> /root/.bashrc
 RUN echo "source /root/ros2_ws/install/setup.bash" >> /root/.bashrc
 
 WORKDIR /root

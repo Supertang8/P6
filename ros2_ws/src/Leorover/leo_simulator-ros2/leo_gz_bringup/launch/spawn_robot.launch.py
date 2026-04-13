@@ -87,7 +87,7 @@ def spawn_robot(context: LaunchContext, namespace: LaunchConfiguration):
         name=node_name_prefix + "parameter_bridge",
         arguments=[
             robot_ns + "/cmd_vel@geometry_msgs/msg/Twist]ignition.msgs.Twist",
-            robot_ns + "/odom@nav_msgs/msg/Odometry[ignition.msgs.Odometry",
+            robot_ns + "/rover_odom@nav_msgs/msg/Odometry[ignition.msgs.Odometry",
             robot_ns + "/tf@tf2_msgs/msg/TFMessage[ignition.msgs.Pose_V",
             robot_ns + "/imu/data_raw@sensor_msgs/msg/Imu[ignition.msgs.IMU",
             robot_ns
