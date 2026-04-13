@@ -19,6 +19,7 @@ def generate_launch_description():
     use_sim_time = LaunchConfiguration('use_sim_time')
     config_path = LaunchConfiguration('config_path')
     config_file = LaunchConfiguration('config_file')
+    namespace = LaunchConfiguration('namespace')
     rviz_use = LaunchConfiguration('rviz')
     rviz_cfg = LaunchConfiguration('rviz_cfg')
 
@@ -34,6 +35,10 @@ def generate_launch_description():
         'config_file', default_value='mid360.yaml',
         description='Config file'
     )
+    declare_namespace_cmd = DeclareLaunchArgument(
+        'namespace', default_value='',
+        description='ROS namespace used to isolate FAST-LIO topics'
+    )
     declare_rviz_cmd = DeclareLaunchArgument(
         'rviz', default_value='true',
         description='Use RViz to monitor results'
@@ -42,17 +47,20 @@ def generate_launch_description():
         'rviz_cfg', default_value=default_rviz_config_path,
         description='RViz config file path'
     )
-
     fast_lio_node = Node(
         package='fast_lio',
         executable='fastlio_mapping',
+        namespace=namespace,
         parameters=[PathJoinSubstitution([config_path, config_file]),
-                    {'use_sim_time': use_sim_time}],
+                    {
+                        'use_sim_time': use_sim_time,
+                    }],
         output='screen'
     )
     rviz_node = Node(
         package='rviz2',
         executable='rviz2',
+        namespace=namespace,
         arguments=['-d', rviz_cfg],
         condition=IfCondition(rviz_use)
     )
@@ -61,6 +69,7 @@ def generate_launch_description():
     ld.add_action(declare_use_sim_time_cmd)
     ld.add_action(declare_config_path_cmd)
     ld.add_action(declare_config_file_cmd)
+    ld.add_action(declare_namespace_cmd)
     ld.add_action(declare_rviz_cmd)
     ld.add_action(declare_rviz_config_path_cmd)
 
