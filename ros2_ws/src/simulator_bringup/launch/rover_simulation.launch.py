@@ -18,6 +18,8 @@ def generate_launch_description():
 
     nav2_pkg = get_package_share_directory('nav2_bringup')
     nav2_launch = os.path.join(nav2_pkg, 'launch', 'navigation_launch.py')
+    nav2_params = os.path.expanduser('~/ros2_ws/src/nav2_config/config/nav2_params_sim.yaml')
+
 
 
     odom_node = TimerAction(
