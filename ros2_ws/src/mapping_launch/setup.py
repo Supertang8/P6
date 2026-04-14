@@ -25,6 +25,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-	],
+            'tf_namespace_republisher = mapping_launch.tf_namespace_republisher:main',
+        ],
     },
 )

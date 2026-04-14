@@ -59,6 +59,13 @@ def generate_launch_description():
         }.items(),
     )
 
+    tf_namespace_republisher = Node(
+        package='mapping_launch',
+        executable='tf_namespace_republisher',
+        namespace=namespace,
+        output='screen',
+    )
+
     # Octomap (delayed to avoid TF startup race).
     octomap = TimerAction(
         period=2.0,
@@ -100,6 +107,7 @@ def generate_launch_description():
         declare_rviz_cmd,
         odom_2_camera_init,
         odom_2_base_link,
+        tf_namespace_republisher,
         fastlio,
         octomap,
     ])
