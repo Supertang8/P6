@@ -10,6 +10,12 @@ from launch_ros.substitutions import FindPackageShare
 def generate_launch_description():
     """Launch the local single-lidar aggregator and livox driver on one machine."""
 
+    namespace_arg = DeclareLaunchArgument(
+        'namespace', default_value='',
+        description='ROS namespace used to isolate Livox topics'
+    )
+    namespace = LaunchConfiguration('namespace')
+
     lidar_topic_arg = DeclareLaunchArgument(
         'lidar_topic', default_value='/livox/lidar_192_168_10_198')
     aggregated_topic_arg = DeclareLaunchArgument(
@@ -47,6 +53,7 @@ def generate_launch_description():
 
     # Create launch description with aggregator and livox driver
     return LaunchDescription([
+        namespace_arg,
         lidar_topic_arg,
         aggregated_topic_arg,
         trigger_service_arg,
@@ -55,7 +62,10 @@ def generate_launch_description():
         downsample_leaf_size_arg,
 
         # Include livox driver launch
-        IncludeLaunchDescription(livox_launch_file),
+        IncludeLaunchDescription(
+            livox_launch_file,
+            launch_arguments={'namespace': namespace}.items()
+        ),
         
         # Launch aggregator node
         aggregator_node,
