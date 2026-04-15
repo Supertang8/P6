@@ -21,20 +21,6 @@ def generate_launch_description():
     nav2_params = os.path.expanduser('~/ros2_ws/src/nav2_config/config/nav2_params_sim.yaml')
 
 
-
-    odom_node = TimerAction(
-        period=5.0,  # wait 5 seconds after Gazebo starts
-        actions=[
-            Node(
-                package="livox_converter",
-                executable="octomap_converter",
-                name="octomap_converter",
-                output="screen",
-                parameters=[{'use_sim_time': True}],
-            )
-        ],
-    )
-
     return LaunchDescription([
         # Launch leo_gz
         IncludeLaunchDescription(
@@ -46,8 +32,6 @@ def generate_launch_description():
             PythonLaunchDescriptionSource(fast_lio_launch),
             launch_arguments={'config_file': fast_lio_config}.items()
         ),
-
-
 
         # Launch octomap_server_node with parameters
         Node(
@@ -62,35 +46,44 @@ def generate_launch_description():
                 'filter_speckles': True,
                 'filter_ground_plane': True,
                 'ground_filter.angle': 0.1,
-                'ground_filter.distance': 0.2,
-                'ground_filter.plane_distance': 0.5,
+                'ground_filter.distance': 0.3,
+                'ground_filter.plane_distance': 0.8,
                 'sensor_model.max_range': 8.0
             }],
             remappings=[('cloud_in', '/cloud_registered_body'), ('projected_map', '/map')]
         ),
 
-        # Static TF: map -> odom
         Node(
             package='tf2_ros',
             executable='static_transform_publisher',
-            name='map_to_odom_tf',
-            arguments=['0', '0', '0', '0', '0', '0', 'map', 'odom'],
-            output='screen'
+            name='map_to_camera_init',
+            arguments=['0','0','0','0','0','0','map','camera_init']
         ),
 
-        # Static TF: map -> camera_init
         Node(
             package='tf2_ros',
             executable='static_transform_publisher',
-            name='map_to_camera_init_tf',
-            arguments=['0', '0', '0', '0', '0', '0', 'map', 'camera_init'],
-            output='screen'
+            name='body_to_base_link',
+            arguments=['0','0','0','0','0','0','body','base_footprint']
+        ),
+
+        Node(
+            package='tf2_ros',
+            executable='static_transform_publisher',
+            name='camera_init_to_odom',
+            arguments=['0','0','0','0','0','0','camera_init','odom']
         ),
 
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(nav2_launch),
-        ),
+        )
 
-
-        odom_node,
     ])
+"""     
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(nav2_launch),  
+            launch_arguments={
+                'params_file': nav2_params,
+                'use_sim_time': 'true'
+            }.items()     
+        ),        """
