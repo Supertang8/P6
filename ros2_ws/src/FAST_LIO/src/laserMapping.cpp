@@ -99,6 +99,45 @@ string normalize_relative_topic(const string &topic)
     return topic.substr(start);
 }
 
+string normalize_relative_name(const string &name)
+{
+    size_t start = 0;
+    while (start < name.size() && name[start] == '/')
+    {
+        ++start;
+    }
+    return name.substr(start);
+}
+
+string normalize_namespace_value(const string &ns)
+{
+    string out = ns;
+    while (!out.empty() && out.front() == '/')
+    {
+        out.erase(out.begin());
+    }
+    while (!out.empty() && out.back() == '/')
+    {
+        out.pop_back();
+    }
+    return out;
+}
+
+string namespaced_frame_id(const string &node_namespace, const string &base_frame)
+{
+    const string normalized_frame = normalize_relative_name(base_frame);
+    const string normalized_ns = normalize_namespace_value(node_namespace);
+    if (normalized_ns.empty())
+    {
+        return normalized_frame;
+    }
+    if (normalized_frame.empty())
+    {
+        return normalized_ns;
+    }
+    return normalized_ns + "/" + normalized_frame;
+}
+
 double res_mean_last = 0.05, total_residual = 0.0;
 double last_timestamp_lidar = 0, last_timestamp_imu = -1.0;
 double gyr_cov = 0.1, acc_cov = 0.1, b_gyr_cov = 0.0001, b_acc_cov = 0.0001;
@@ -882,6 +921,9 @@ public:
         this->get_parameter_or<vector<double>>("mapping.extrinsic_T", extrinT, vector<double>());
         this->get_parameter_or<vector<double>>("mapping.extrinsic_R", extrinR, vector<double>());
 
+        camera_init_frame = namespaced_frame_id(this->get_namespace(), camera_init_frame);
+        body_frame = namespaced_frame_id(this->get_namespace(), body_frame);
+
         lid_topic = normalize_relative_topic(lid_topic);
         imu_topic = normalize_relative_topic(imu_topic);
         const string cloud_registered_topic = "cloud_registered";
@@ -894,6 +936,8 @@ public:
         RCLCPP_INFO(this->get_logger(), "Using namespace-aware relative topics");
         RCLCPP_INFO(this->get_logger(), "LiDAR topic: %s", lid_topic.c_str());
         RCLCPP_INFO(this->get_logger(), "IMU topic: %s", imu_topic.c_str());
+        RCLCPP_INFO(this->get_logger(), "TF parent frame: %s", camera_init_frame.c_str());
+        RCLCPP_INFO(this->get_logger(), "TF child frame: %s", body_frame.c_str());
 
         RCLCPP_INFO(this->get_logger(), "p_pre->lidar_type %d", p_pre->lidar_type);
 

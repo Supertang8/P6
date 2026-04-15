@@ -51,8 +51,8 @@ def generate_launch_description():
         arguments=[
             '--x', '0', '--y', '0', '--z', '0',
             '--qx', '0.0', '--qy', '0.0', '--qz', '0.0', '--qw', '1.0',
-            '--frame-id', 'drone/odom',
-            '--child-frame-id', 'rover/odom',
+            '--frame-id', 'rover/camera_init',
+            '--child-frame-id', 'drone/camera_init',
         ],
         output='screen',
     )

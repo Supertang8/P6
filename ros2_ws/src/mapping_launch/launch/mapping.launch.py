@@ -31,8 +31,8 @@ def generate_launch_description():
         namespace=namespace,
         arguments=[
             '--x', '0', '--y', '0', '--z', '0', '--qx', '0.0', '--qy', '0.0', '--qz', '0.0', '--qw', '1.0',
-            '--frame-id', 'odom',
-            '--child-frame-id', 'camera_init',
+            '--frame-id', [namespace, '/camera_init'],
+            '--child-frame-id', [namespace, '/odom'],
         ],
     )
 
@@ -44,8 +44,8 @@ def generate_launch_description():
         output='screen',
         parameters=[{
             'odom_topic': 'Odometry',
-            'frame_id': 'odom',
-            'child_frame_id': 'base_link',
+            'frame_id': [namespace, '/odom'],
+            'child_frame_id': [namespace, '/base_link'],
             'use_yaw_only': True,
         }],
     )
@@ -59,12 +59,12 @@ def generate_launch_description():
         }.items(),
     )
 
-    tf_namespace_republisher = Node(
-        package='mapping_launch',
-        executable='tf_namespace_republisher',
-        namespace=namespace,
-        output='screen',
-    )
+    #tf_namespace_republisher = Node(
+    #    package='mapping_launch',
+    #    executable='tf_namespace_republisher',
+    #    namespace=namespace,
+    #    output='screen',
+    #)
 
     # Octomap (delayed to avoid TF startup race).
     octomap = TimerAction(
@@ -77,21 +77,21 @@ def generate_launch_description():
                 namespace=namespace,
                 output='screen',
                 parameters=[{
-                    'frame_id': 'odom',
-                    'resolution': 0.1,
-                    'base_frame_id': 'base_link',
+                    'frame_id': [namespace, '/camera_init'],
+                    'resolution': 0.05,
+                    'base_frame_id': [namespace, '/body'],
                     'filter_speckles': True,
                     'filter_ground_plane': True,
-                    'ground_filter.angle': 0.1,
+                    'ground_filter.angle': 0.9,
                     'ground_filter.distance': 0.3,
-                    'ground_filter.plane_distance': 0.1,
+                    'ground_filter.plane_distance': 0.4,
                     'sensor_model.max_range': 8.0,
-                    'point_cloud_max_z': 1.2,
-                    'point_cloud_min_z': 0.0,
+                    'point_cloud_max_z': 1.5,
+                    'point_cloud_min_z': -0.5,
                 }],
                 remappings=[
                     ('cloud_in', 'cloud_registered_body'),
-                    ('/projected_map', 'project_map'),
+                    ('/projected_map', 'map'),
                     ('/octomap_binary', 'octomap_binary'),
                     ('/octomap_full', 'octomap_full'),
                     ('/octomap_point_cloud_centers', 'octomap_point_cloud_centers'),
@@ -106,8 +106,8 @@ def generate_launch_description():
         declare_namespace_cmd,
         declare_rviz_cmd,
         odom_2_camera_init,
-        odom_2_base_link,
-        tf_namespace_republisher,
+        #odom_2_base_link,
+        #tf_namespace_republisher,
         fastlio,
         octomap,
     ])
