@@ -118,8 +118,8 @@ class VelocityController(Node):
         uz = pz + iz + dz
 
         # Velocity limits
-        max_vel_xy = 5.0  # m/s
-        max_vel_z = 1.0   # m/s
+        max_vel_xy = 2.0  # m/s
+        max_vel_z = 3.0   # m/s
         ux = max(min(ux, max_vel_xy), -max_vel_xy)
         uy = max(min(uy, max_vel_xy), -max_vel_xy)
         uz = max(min(uz, max_vel_z), -max_vel_z)
