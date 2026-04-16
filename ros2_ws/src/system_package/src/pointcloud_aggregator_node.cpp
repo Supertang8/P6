@@ -7,6 +7,7 @@
 #include <pcl_conversions/pcl_conversions.h>
 #include <std_srvs/srv/trigger.hpp>
 #include <atomic>
+#include <cmath>
 #include <memory>
 
 using CustomMsg = livox_ros_driver2::msg::CustomMsg;
@@ -25,6 +26,8 @@ public:
     this->declare_parameter<std::string>("output_frame_id", "livox_frame");
     this->declare_parameter<int>("messages_to_accumulate", 10);
     this->declare_parameter<float>("downsample_leaf_size", 0.05f);
+    this->declare_parameter<float>("min_dist", 0.0f);
+    this->declare_parameter<float>("max_dist", 100.0f);
 
     // Get parameter values
     lidar_topic_ = this->get_parameter("lidar_topic").as_string();
@@ -34,12 +37,31 @@ public:
     const int requested = this->get_parameter("messages_to_accumulate").as_int();
     messages_to_accumulate_ = static_cast<size_t>(requested > 0 ? requested : 1);
     downsample_leaf_size_ = static_cast<float>(this->get_parameter("downsample_leaf_size").as_double());
+    min_dist_ = static_cast<float>(this->get_parameter("min_dist").as_double());
+    max_dist_ = static_cast<float>(this->get_parameter("max_dist").as_double());
+
+    if (min_dist_ < 0.0f) {
+      RCLCPP_WARN(this->get_logger(), "min_dist < 0 (%.4f). Clamping to 0.", min_dist_);
+      min_dist_ = 0.0f;
+    }
+    if (max_dist_ <= min_dist_) {
+      const float adjusted = min_dist_ + 0.1f;
+      RCLCPP_WARN(
+        this->get_logger(),
+        "max_dist (%.4f) must be greater than min_dist (%.4f). Adjusting max_dist to %.4f.",
+        max_dist_, min_dist_, adjusted);
+      max_dist_ = adjusted;
+    }
+    min_dist_sq_ = min_dist_ * min_dist_;
+    max_dist_sq_ = max_dist_ * max_dist_;
 
     RCLCPP_INFO(this->get_logger(), "Input lidar topic: %s", lidar_topic_.c_str());
     RCLCPP_INFO(this->get_logger(), "Output aggregated topic: %s", aggregated_topic_.c_str());
     RCLCPP_INFO(this->get_logger(), "Trigger service: %s", trigger_service_.c_str());
     RCLCPP_INFO(this->get_logger(), "Messages to accumulate: %zu, downsample leaf: %.4f",
       messages_to_accumulate_, downsample_leaf_size_);
+    RCLCPP_INFO(this->get_logger(), "Distance crop: min_dist=%.3f m, max_dist=%.3f m",
+      min_dist_, max_dist_);
 
     sub_lidar_ = this->create_subscription<CustomMsg>(
       lidar_topic_,
@@ -75,6 +97,12 @@ private:
   size_t messages_to_accumulate_ = 10;
   size_t lidar_msgs_ = 0;
   float downsample_leaf_size_ = 0.05f;
+  float min_dist_ = 0.0f;
+  float max_dist_ = 100.0f;
+  float min_dist_sq_ = 0.0f;
+  float max_dist_sq_ = 10000.0f;
+  size_t points_received_ = 0;
+  size_t points_in_range_ = 0;
   std::string lidar_topic_;
   std::string aggregated_topic_;
   std::string trigger_service_;
@@ -91,8 +119,13 @@ private:
       return;
     }
 
+    points_received_ += msg->points.size();
     for (const auto & p : msg->points) {
-      lidar_cloud_.push_back(pcl::PointXYZ{p.x, p.y, p.z});
+      const float dist_sq = (p.x * p.x) + (p.y * p.y) + (p.z * p.z);
+      if (dist_sq >= min_dist_sq_ && dist_sq <= max_dist_sq_) {
+        lidar_cloud_.push_back(pcl::PointXYZ{p.x, p.y, p.z});
+        ++points_in_range_;
+      }
     }
 
     ++lidar_msgs_;
@@ -118,6 +151,8 @@ private:
 
     lidar_cloud_.clear();
     lidar_msgs_ = 0;
+    points_received_ = 0;
+    points_in_range_ = 0;
     collecting_ = true;
 
     response->success = true;
@@ -147,9 +182,12 @@ private:
 
     RCLCPP_INFO(
       this->get_logger(),
-      "Published aggregated cloud on %s: %zu raw points -> %zu downsampled points",
+      "Published aggregated cloud on %s: %zu input points, %zu within [%.2f, %.2f] m -> %zu downsampled points",
       aggregated_topic_.c_str(),
-      lidar_cloud_.size(),
+      points_received_,
+      points_in_range_,
+      min_dist_,
+      max_dist_,
       downsampled.size());
   }
 };
