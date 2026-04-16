@@ -22,6 +22,29 @@ def generate_launch_description():
 
 
     return LaunchDescription([
+
+
+        Node(
+            package='tf2_ros',
+            executable='static_transform_publisher',
+            name='map_to_camera_init',
+            arguments=['0','0','0','0','0','0','map','camera_init']
+        ),
+
+        Node(
+            package='tf2_ros',
+            executable='static_transform_publisher',
+            name='body_to_base_link',
+            arguments=['0','0','0','0','0','0','body','base_footprint']
+        ),
+
+        Node(
+            package='tf2_ros',
+            executable='static_transform_publisher',
+            name='camera_init_to_odom',
+            arguments=['0','0','0','0','0','0','camera_init','odom']
+        ),
+
         # Launch leo_gz
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(leo_gz_launch),
@@ -51,27 +74,6 @@ def generate_launch_description():
                 'sensor_model.max_range': 8.0
             }],
             remappings=[('cloud_in', '/cloud_registered_body'), ('projected_map', '/map')]
-        ),
-
-        Node(
-            package='tf2_ros',
-            executable='static_transform_publisher',
-            name='map_to_camera_init',
-            arguments=['0','0','0','0','0','0','map','camera_init']
-        ),
-
-        Node(
-            package='tf2_ros',
-            executable='static_transform_publisher',
-            name='body_to_base_link',
-            arguments=['0','0','0','0','0','0','body','base_footprint']
-        ),
-
-        Node(
-            package='tf2_ros',
-            executable='static_transform_publisher',
-            name='camera_init_to_odom',
-            arguments=['0','0','0','0','0','0','camera_init','odom']
         ),
 
         IncludeLaunchDescription(
