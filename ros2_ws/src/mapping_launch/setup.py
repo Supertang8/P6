@@ -26,6 +26,7 @@ setup(
     entry_points={
         'console_scripts': [
             'tf_namespace_republisher = mapping_launch.tf_namespace_republisher:main',
+            'camera_init_tf_from_raw_lidar = mapping_launch.camera_init_tf_from_raw_lidar:main',
         ],
     },
 )
