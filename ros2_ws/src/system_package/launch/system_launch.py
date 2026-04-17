@@ -1,5 +1,11 @@
 from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument
+from launch.actions import IncludeLaunchDescription
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.substitutions import LaunchConfiguration
+from launch.substitutions import PathJoinSubstitution
 from launch_ros.actions import Node
+from launch_ros.substitutions import FindPackageShare
 import math
 
 
@@ -35,7 +41,52 @@ def transform_from_xyz_rxyz(x, y, z, rotx_deg, roty_deg, rotz_deg):
 
 
 def generate_launch_description():
-    """Launch the system_node with configurable LiDAR topics."""
+    """Launch rover/drone aggregators and the system node in one launch script."""
+    messages_to_accumulate_arg = DeclareLaunchArgument(
+        'messages_to_accumulate', default_value='10')
+    downsample_leaf_size_arg = DeclareLaunchArgument(
+        'downsample_leaf_size', default_value='0.05')
+    min_dist_arg = DeclareLaunchArgument(
+        'min_dist', default_value='1.0')
+    max_dist_arg = DeclareLaunchArgument(
+        'max_dist', default_value='10.0')
+
+    rover_aggregator = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            PathJoinSubstitution([
+                FindPackageShare('system_package'),
+                'launch',
+                'find_tf_launch.py',
+            ])
+        ),
+        launch_arguments={
+            'namespace': 'rover',
+            'output_frame_id': 'rover_lidar',
+            'messages_to_accumulate': LaunchConfiguration('messages_to_accumulate'),
+            'downsample_leaf_size': LaunchConfiguration('downsample_leaf_size'),
+            'min_dist': LaunchConfiguration('min_dist'),
+            'max_dist': LaunchConfiguration('max_dist'),
+        }.items(),
+    )
+
+    drone_aggregator = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            PathJoinSubstitution([
+                FindPackageShare('system_package'),
+                'launch',
+                'find_tf_launch.py',
+            ])
+        ),
+        launch_arguments={
+            'namespace': 'drone',
+            'output_frame_id': 'drone_lidar',
+            'messages_to_accumulate': LaunchConfiguration('messages_to_accumulate'),
+            'downsample_leaf_size': LaunchConfiguration('downsample_leaf_size'),
+            'min_dist': LaunchConfiguration('min_dist'),
+            'max_dist': LaunchConfiguration('max_dist'),
+        }.items(),
+    )
+
     # Initial guess in meters and degrees.
     x, y, z = 0.0, 0.0, -0.2
     rotx, roty, rotz = 0.0, -10.0, 90.0
@@ -55,14 +106,20 @@ def generate_launch_description():
         name='system_node',
         output='screen',
         parameters=[
-            {'drone_lidar_topic': '/livox/lidar_192_168_1_122'},
-            {'drone_imu_topic': '/livox/imu_192_168_1_122'},
-            {'rover_lidar_topic': '/livox/lidar_192_168_10_198'},
-            {'rover_imu_topic': '/livox/imu_192_168_10_198'},
+            {'drone_aggregated_topic': '/drone/aggregated_pointcloud'},
+            {'rover_aggregated_topic': '/rover/aggregated_pointcloud'},
+            {'drone_trigger_service': '/drone/trigger_accumulation'},
+            {'rover_trigger_service': '/rover/trigger_accumulation'},
             {'initial_guess_drone_to_rover': initial_guess_drone_to_rover},
         ],
     )
 
     return LaunchDescription([
+        messages_to_accumulate_arg,
+        downsample_leaf_size_arg,
+        min_dist_arg,
+        max_dist_arg,
+        rover_aggregator,
+        drone_aggregator,
         system_node,
     ])
