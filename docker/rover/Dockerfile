@@ -49,6 +49,8 @@ RUN git clone https://github.com/Livox-SDK/Livox-SDK2.git && \
 
 WORKDIR /root/ros2_ws
 
-RUN git clone https://github.com/ros-navigation/navigation2.git --branch $ROS_DISTRO ./src/navigation2
+RUN git clone https://github.com/ros-navigation/navigation2.git --branch $ROS_DISTRO ./src/navigation2 && rosdep install -y \
+--from-paths ./src \
+--ignore-src 
 
 CMD ["bash"]
