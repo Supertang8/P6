@@ -569,8 +569,13 @@
           </scan>
 
           <range>
+<<<<<<< Updated upstream
             <min>0.3</min>
             <max>50.0</max>
+=======
+            <min>0.1</min>
+            <max>70.0</max>
+>>>>>>> Stashed changes
             <resolution>0.01</resolution>
           </range>
 

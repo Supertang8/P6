@@ -25,8 +25,11 @@ setup(
     entry_points={
         'console_scripts': [
             'pc2_to_livox = livox_converter.pc2_to_livox:main',
+<<<<<<< Updated upstream
             'livox_imu = livox_converter.livox_imu:main',
             'octomap_converter = livox_converter.octomap_converter:main',
+=======
+>>>>>>> Stashed changes
         ],
     },
 )
