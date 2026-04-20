@@ -30,7 +30,7 @@ def generate_launch_description():
         # Launch fast_lio with config_file argument
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(fast_lio_launch),
-            launch_arguments={'config_file': fast_lio_config}.items()
+            launch_arguments={'config_file': fast_lio_config, 'rviz': 'false'}.items()
         ),
 
         # Launch octomap_server_node with parameters
@@ -78,7 +78,7 @@ def generate_launch_description():
             PythonLaunchDescriptionSource(nav2_launch),  
             launch_arguments={
                 'params_file': nav2_params,
-                'use_sim_time': 'true'
+                'use_sim_time': 'false'
             }.items()   
         ),
     ])
