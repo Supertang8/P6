@@ -60,6 +60,8 @@ def generate_launch_description():
     drone_mapping = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(mapping_launch_path),
         launch_arguments={
+            'body_namespace': 'drone',
+            'world_namespace': 'rover',
             'namespace': 'drone',
             'rviz': rviz,
         }.items(),
@@ -73,6 +75,8 @@ def generate_launch_description():
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(mapping_launch_path),
                 launch_arguments={
+                    'body_namespace': 'rover',
+                    'world_namespace': 'rover',
                     'namespace': 'rover',
                     'rviz': rviz,
                 }.items(),
@@ -98,6 +102,17 @@ def generate_launch_description():
         output='screen',
     )
 
+    merge_map_node = Node(
+        package='merge_map',
+        executable='merge_map',
+        output='screen',
+        parameters=[{'use_sim_time': True}],
+        remappings=[
+            ('/map1', '/rover/projected_map'),
+            ('/map2', '/drone/projected_map'),
+        ],
+    )
+
     return LaunchDescription([
         declare_rviz_cmd,
         declare_lidar_tf_xyz_cmd,
@@ -109,4 +124,5 @@ def generate_launch_description():
         drone_mapping,
         rover_mapping,
         camera_init_from_raw_lidar,
+        merge_map_node,
     ])
