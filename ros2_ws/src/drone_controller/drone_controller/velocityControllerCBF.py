@@ -43,8 +43,8 @@ class VelocityController(Node):
 
         # --- TF2 setup ---
         # Change these frame names to match your TF tree
-        self.parent_frame = "camera_init"        # e.g. "world", "odom"
-        self.child_frame  = "body"  # e.g. "drone", "body"
+        self.parent_frame = "drone/camera_init"        # e.g. "world", "odom"
+        self.child_frame  = "drone/body"  # e.g. "drone", "body"
         self.tf_buffer = tf2_ros.Buffer() 
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
 
