@@ -57,4 +57,15 @@ RUN sudo apt update && \
 rosdep install -y \
 --from-paths ./src \
 --ignore-src
-CMD ["bash"]
+
+WORKDIR /root
+
+COPY entrypoint.sh /root/entrypoint.sh
+RUN chmod +x /root/entrypoint.sh
+
+WORKDIR /root/ros2_ws
+
+#CMD ["bash"]
+
+ENTRYPOINT ["/root/entrypoint.sh"]
+
