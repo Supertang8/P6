@@ -56,8 +56,7 @@ RUN git clone https://github.com/ros-navigation/navigation2.git --branch $ROS_DI
 RUN sudo apt update && \ 
 rosdep install -y \
 --from-paths ./src \
---ignore-src \
---skip-keys "gazebo_ros gazebo_ros_pkgs"
+--ignore-src 
 
 WORKDIR /root
 
