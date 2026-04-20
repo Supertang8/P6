@@ -43,8 +43,10 @@ class MergeMapNode(Node):
     def __init__(self):
         super().__init__('merge_map_node')
         self.publisher = self.create_publisher(OccupancyGrid, '/merge_map', 10)
-        self.subscription = self.create_subscription(OccupancyGrid, '/projected_map_rover', self.map1_callback, 10)
-        self.subscription = self.create_subscription(OccupancyGrid, '/projected_map_drone', self.map2_callback, 10)
+        self.subscription_map1 = self.create_subscription(
+            OccupancyGrid, '/map1', self.map1_callback, 10)
+        self.subscription_map2 = self.create_subscription(
+            OccupancyGrid, '/map2', self.map2_callback, 10)
         self.map1 = None
         self.map2 = None
 

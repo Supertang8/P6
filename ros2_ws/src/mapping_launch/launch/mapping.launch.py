@@ -12,16 +12,26 @@ from launch_ros.actions import Node
 def generate_launch_description():
     fast_lio_launch_path = os.path.join(
         get_package_share_directory('fast_lio'), 'launch', 'mapping.launch.py')
+    world_namespace = LaunchConfiguration('world_namespace')
+    body_namespace = LaunchConfiguration('body_namespace')
     namespace = LaunchConfiguration('namespace')
     rviz = LaunchConfiguration('rviz')
 
-    declare_namespace_cmd = DeclareLaunchArgument(
-        'namespace', default_value='',
-        description='ROS namespace used to isolate mapper topics'
+    declare_world_namespace_cmd = DeclareLaunchArgument(
+        'world_namespace', default_value='',
+        description='ROS namespace used to isolate mapper world frame topic'
+    )
+    declare_body_namespace_cmd = DeclareLaunchArgument(
+        'body_namespace', default_value='',
+        description='ROS namespace used to isolate mapper body frame topic'
     )
     declare_rviz_cmd = DeclareLaunchArgument(
         'rviz', default_value='true',
         description='Use RViz to monitor results'
+    )
+    declare_namespace_cmd = DeclareLaunchArgument(
+        'namespace', default_value='',
+        description='ROS namespace used to isolate all mapper topics'
     )
 
     # Generates static tf for 'odom' -> 'camera_init', aligning to gravity.
@@ -77,9 +87,9 @@ def generate_launch_description():
                 namespace=namespace,
                 output='screen',
                 parameters=[{
-                    'frame_id': [namespace, '/camera_init'],
+                    'frame_id': [world_namespace, '/camera_init'],
                     'resolution': 0.05,
-                    'base_frame_id': [namespace, '/base_link'],
+                    'base_frame_id': [body_namespace, '/base_link'],
                     'filter_speckles': True,
                     'filter_ground_plane': True,
                     'ground_filter.angle': 0.3,
@@ -103,8 +113,10 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        declare_namespace_cmd,
+        declare_world_namespace_cmd,
+        declare_body_namespace_cmd,
         declare_rviz_cmd,
+        declare_namespace_cmd,
         odom_2_camera_init,
         odom_2_base_link,
         #tf_namespace_republisher,
