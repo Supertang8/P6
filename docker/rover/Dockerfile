@@ -27,6 +27,8 @@ RUN apt update && \
         ros-humble-octomap-server \
         ros-humble-octomap-rviz-plugins \
         ros-humble-teleop-twist-keyboard \
+        ros-humble-bondcpp \
+        ros-humble-test-msgs \
     && rm -rf /var/lib/apt/lists/*
 
 # Initialize rosdep
@@ -51,4 +53,8 @@ WORKDIR /root/ros2_ws
 
 RUN git clone https://github.com/ros-navigation/navigation2.git --branch $ROS_DISTRO ./src/navigation2 
 
+RUN sudo apt update && \ 
+rosdep install -y \
+--from-paths ./src \
+--ignore-src
 CMD ["bash"]
