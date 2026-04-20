@@ -27,6 +27,7 @@ setup(
         'send_setpoints = drone_controller.send_setpoints:main',
         'velocityController = drone_controller.velocityController:main',
         'first_point_in_path = drone_controller.first_point_in_path:main',
+        'velocityControllerCBF = drone_controller.velocityControllerCBF:main',
         ],
     },
 )
