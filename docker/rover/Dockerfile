@@ -51,13 +51,14 @@ RUN git clone https://github.com/Livox-SDK/Livox-SDK2.git && \
 
 WORKDIR /root/ros2_ws
 
-RUN git clone https://github.com/ros-navigation/navigation2.git --branch $ROS_DISTRO ./src/navigation2 
+RUN git clone --depth 1 https://github.com/ros-navigation/navigation2.git --branch $ROS_DISTRO ./src/navigation2 
 
-RUN sudo apt update && \ 
+RUN apt update && \
 rosdep install -y \
 --from-paths ./src \
 --ignore-src \
---skip-keys "gazebo_ros gazebo_ros_pkgs"
+--skip-keys="gazebo_ros gazebo_ros_pkgs"\
+--rosdistro $ROS_DISTRO
 
 WORKDIR /root
 
