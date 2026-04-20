@@ -88,6 +88,7 @@ class VelocityController(Node):
             )
             t = tf.transform.translation
             self.current_pos = [t.x, t.y, t.z]
+            self.get_logger().info(f"Current position from TF: x={t.x:.2f}, y={t.y:.2f}, z={t.z:.2f}")
             return True
         except TransformException as e:
             self.get_logger().warn(f"Could not get TF transform: {e}", throttle_duration_sec=2.0)
