@@ -57,8 +57,8 @@ RUN apt update && \
 rosdep install -y \
 --from-paths ./src \
 --ignore-src \
---skip-keys="gazebo_ros gazebo_ros_pkgs"\
---rosdistro $ROS_DISTRO
+--skip-keys="gazebo_ros gazebo_ros_pkgs"
+
 
 WORKDIR /root
 
