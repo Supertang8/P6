@@ -55,7 +55,7 @@ RUN git clone https://github.com/ros-navigation/navigation2.git --branch $ROS_DI
 
 RUN sudo apt update && \ 
 rosdep install -y \
---from-paths ./src \
+--from-paths ./src/navigation2 \
 --ignore-src 
 
 WORKDIR /root
