@@ -40,6 +40,9 @@ class VelocityController(Node):
         # CBF parameters
         self.max_dist = 10.0 #Maximum distance from drone to rover
         self.alpha = 1.5 #CBF gain (TUNE, ofte mellem 1-3)
+        ####### Rover state FOR TESTING PURPOSES, REPLACE WITH REAL SUBSCRIBER##########
+        self.rover_pos = [0.0, 0.0, 0.0]  # [x,y,z]
+        self.rover_vel = [0.0, 0.0, 0.0]
 
         # --- TF2 setup ---
         # Change these frame names to match your TF tree
@@ -95,6 +98,36 @@ class VelocityController(Node):
             return False
 
   
+    def apply_cbf(self, ux, uy, uz):
+        dx = self.current_pos[0] - self.rover_pos[0]
+        dy = self.current_pos[1] - self.rover_pos[1]
+        dz = self.current_pos[2] - self.rover_pos[2]
+
+        h = self.max_dist**2 - (dx**2 + dy**2 + dz**2)
+        u_rel = [ux - self.rover_vel[0], 
+                    uy - self.rover_vel[1], 
+                    uz - self.rover_vel[2]]
+        
+        h_dot = -2 * (dx * u_rel[0]+ dy * u_rel[1] + dz * u_rel[2])
+
+        ### First we check if the current control input satisfies the CBF constraint
+        if h_dot + self.alpha * h >= 0:
+            return ux, uy, uz  # No modification needed
+        ### If not, we project the control input onto the boundary of the safe set
+        h_grad = [-2*dx, -2*dy, -2*dz]
+        h_grad_norm = h_grad[0]**2 + h_grad[1]**2 + h_grad[2]**2
+
+        ### If we're exactly at the boundary, stop (And avoid division by zero)
+        if h_grad_norm < 1e-6:
+            return 0.0, 0.0, 0.0  
+
+        ### Compute the safe control input
+        lambda_val = (-(self.alpha * h) - h_dot) / h_grad_norm
+        ux_safe = ux + lambda_val * h_grad[0]
+        uy_safe = uy + lambda_val * h_grad[1]
+        uz_safe = uz + lambda_val * h_grad[2]
+
+        return ux_safe, uy_safe, uz_safe
        
 
     def control_loop(self):
@@ -144,6 +177,9 @@ class VelocityController(Node):
         ux = px + ix + dx
         uy = py + iy + dy
         uz = pz + iz + dz
+
+        # Apply CBF
+        ux, uy, uz = self.apply_cbf(ux, uy, uz)
 
         # Velocity limits
         max_vel_xy = 5.0  # m/s

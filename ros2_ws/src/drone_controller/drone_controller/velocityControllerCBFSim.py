@@ -39,7 +39,7 @@ class VelocityController(Node):
 
         # CBF params
         self.max_dist = 10.0 #Maximum distance from drone to rover
-        self.alpha = 1
+        self.alpha = 2.0
         ####### Rover state FOR TESTING PURPOSES, REPLACE WITH REAL SUBSCRIBER##########
         self.rover_pos = [0.0, 0.0, 0.0]  # [x,y,z]
         self.rover_vel = [0.0, 0.0, 0.0]
@@ -111,7 +111,6 @@ class VelocityController(Node):
         uz_safe = uz + lambda_val * h_grad[2]
 
         return ux_safe, uy_safe, uz_safe
-
 
 
 
