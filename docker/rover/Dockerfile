@@ -56,7 +56,8 @@ RUN git clone https://github.com/ros-navigation/navigation2.git --branch $ROS_DI
 RUN sudo apt update && \ 
 rosdep install -y \
 --from-paths ./src \
---ignore-src
+--ignore-src \
+--skip-keys "gazebo_ros gazebo_ros_pkgs"
 
 WORKDIR /root
 
@@ -65,7 +66,7 @@ RUN chmod +x /root/entrypoint.sh
 
 WORKDIR /root/ros2_ws
 
-#CMD ["bash"]
+CMD ["bash"]
 
-ENTRYPOINT ["/root/entrypoint.sh"]
+#ENTRYPOINT ["/root/entrypoint.sh"]
 
