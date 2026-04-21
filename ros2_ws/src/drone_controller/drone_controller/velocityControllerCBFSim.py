@@ -9,6 +9,9 @@ from px4_msgs.msg import VehicleLocalPosition
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 
+import tf2_ros
+from tf2_ros import TransformException
+
 
 class VelocityController(Node):
     def __init__(self):
@@ -43,6 +46,13 @@ class VelocityController(Node):
         ####### Rover state FOR TESTING PURPOSES, REPLACE WITH REAL SUBSCRIBER##########
         self.rover_pos = [0.0, 0.0, 0.0]  # [x,y,z]
         self.rover_vel = [0.0, 0.0, 0.0]
+
+        # --- TF2 setup ---
+        # Change these frame names to match your TF tree
+        self.parent_frame_rover = "camera_init"     
+        self.child_frame_rover  = "body"  
+        self.tf_buffer = tf2_ros.Buffer() 
+        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
 
         qos = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
@@ -79,6 +89,25 @@ class VelocityController(Node):
 
     def pose_callback(self, msg: VehicleLocalPosition):
         self.current_pos = [msg.x, msg.y, msg.z]
+    
+    def _update_rover_position_from_tf(self) -> bool:
+        """Look up the latest drone transform and update self.current_pos.
+        Returns True on success, False if the transform is not yet available."""
+        try:
+            # rclpy.time.Time() means "latest available transform"
+            ########### TILFØJ ROVER/
+            tf = self.tf_buffer.lookup_transform(
+                self.parent_frame_rover,
+                self.child_frame_rover,
+                rclpy.time.Time(),
+            )
+            t = tf.transform.translation
+            self.rover_pos = [t.x, t.y, t.z]
+            self.get_logger().info(f"Current rover position from TF: x={t.x:.2f}, y={t.y:.2f}, z={t.z:.2f}")
+            return True
+        except TransformException as e:
+            self.get_logger().warn(f"Could not get TF transform: {e}", throttle_duration_sec=2.0)
+            return False
 
 
     def apply_cbf(self, ux, uy, uz):
@@ -115,6 +144,10 @@ class VelocityController(Node):
 
 
     def control_loop(self):
+        # Refresh position from TF every tick
+        if not self._update_rover_position_from_tf():
+            return
+
         if self.desired_pose is None or self.current_pos is None:
             return
 
