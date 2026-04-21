@@ -554,17 +554,17 @@
         <ray>
           <scan>
             <horizontal>
-              <samples>1024</samples>
+              <samples>2048</samples>
               <resolution>1</resolution>
               <min_angle>-3.14159</min_angle>
               <max_angle>3.14159</max_angle>
             </horizontal>
 
             <vertical>
-              <samples>16</samples>
+              <samples>64</samples>
               <resolution>1</resolution>
-              <min_angle>-0.261799</min_angle>   <!-- -15 deg -->
-              <max_angle>0.261799</max_angle>    <!-- +15 deg -->
+              <min_angle>-0.52</min_angle>   <!-- -15 deg -->
+              <max_angle>0.52</max_angle>    <!-- +15 deg -->
             </vertical>
           </scan>
 

@@ -26,6 +26,8 @@ RUN apt update && apt install -y \
 RUN rosdep init || true
 RUN rosdep update
 
+WORKDIR /root
+RUN git clone https://github.com/Jonjon264/PX4-Autopilot.git --recursive
 # Auto-source ROS
 RUN echo "source /opt/ros/humble/setup.bash" >> /root/.bashrc
 

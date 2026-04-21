@@ -27,9 +27,9 @@ RUN apt update && \
         ros-humble-octomap-msgs \
         ros-humble-octomap-server \
         ros-humble-octomap-rviz-plugins \
-        ros-humble-navigation2 \
-	    ros-humble-nav2-bringup \
         ros-humble-teleop-twist-keyboard \
+        ros-humble-bondcpp \
+        ros-humble-test-msgs \
     && rm -rf /var/lib/apt/lists/*
 
 
@@ -39,7 +39,7 @@ RUN rosdep update
 
 # Auto-source ROS
 RUN echo "source /opt/ros/humble/setup.bash" >> /root/.bashrc
-RUN echo "alias cb='cd /root/ros2_ws && colcon build --packages-select livox_ros_driver2 fast_lio system_package mapping_launch livox_converter leo leo_msgs leo_teleop leo_description leo_gz_bringup leo_gz_plugins leo_gz_worlds leo_simulator leo_simulator simulator_bringup mapping_launch nav2_config odom_to_tf_ros2 && colcon build --symlink-install --packages-up-to multi_lidar_calibrator --cmake-args -DCMAKE_BUILD_TYPE=Release'" >> /root/.bashrc
+RUN echo "alias cb='cd /root/ros2_ws && colcon build --packages-select livox_ros_driver2 fast_lio system_package mapping_launch livox_converter leo leo_msgs leo_teleop leo_description leo_gz_bringup leo_gz_plugins leo_gz_worlds leo_simulator leo_simulator simulator_bringup mapping_launch nav2_config odom_to_tf_ros2 && colcon build --symlink-install --packages-up-to multi_lidar_calibrator --cmake-args -DCMAKE_BUILD_TYPE=Release && colcon build --base-paths src/navigation2'" >> /root/.bashrc
 RUN echo "source /root/ros2_ws/install/setup.bash" >> /root/.bashrc
 
 # Install Multi_Lica for Lidar calibration
@@ -70,4 +70,25 @@ RUN git clone https://github.com/Livox-SDK/Livox-SDK2.git && \
 
 WORKDIR /root/ros2_ws
 
+RUN git clone --depth 1 https://github.com/ros-navigation/navigation2.git --branch $ROS_DISTRO ./src/navigation2 
+
+RUN apt update && \
+rosdep install -y \
+--from-paths ./src \
+--ignore-src \
+--skip-keys="gazebo_ros gazebo_ros_pkgs"
+
+
+WORKDIR /root
+
+COPY entrypoint.sh /root/entrypoint.sh
+RUN chmod +x /root/entrypoint.sh
+
+WORKDIR /root/ros2_ws
+
+#ENTRYPOINT ["/root/entrypoint.sh"]
+
 CMD ["bash"]
+
+
+

@@ -20,9 +20,10 @@ from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 SETPOINTS = [
     # (north, east, down,  yaw_deg)
     (  0.0,  0.0, -5.0,  0.0),
-    (  5.0, 0.0, -5.0,  0.0),
-    (  5.0, 5.0, -5.0,  0.0),
-    (  0.0, 5.0, -5.0,  0.0),
+    (  15.0, 0.0, -5.0,  0.0),
+    (  0.0, 0.0, -5.0,  0.0),
+    (  15.0, 0.0, -5.0,  0.0),
+    (  0.0,  0.0, -5.0,  0.0),
 
     #Z hover test
     # (0.0, 0.0, -3.0, 0.0),
@@ -35,7 +36,7 @@ SETPOINTS = [
     # (0.0, 0.0, -6.0, 0.0),
 ]
 
-INTERVAL_S = 5.0
+INTERVAL_S = 15.0
 
 
 def make_msg(north: float, east: float, down: float, yaw_deg: float) -> PoseStamped:

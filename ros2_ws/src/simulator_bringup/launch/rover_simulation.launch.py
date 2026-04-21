@@ -18,10 +18,32 @@ def generate_launch_description():
 
     nav2_pkg = get_package_share_directory('nav2_bringup')
     nav2_launch = os.path.join(nav2_pkg, 'launch', 'navigation_launch.py')
-    nav2_params = os.path.expanduser('~/ros2_ws/src/nav2_config/config/nav2_params_sim.yaml')
-
+    nav2_params = os.path.expanduser('~/ros2_ws/src/navigation2/nav2_bringup/params/nav2_params.yaml')
 
     return LaunchDescription([
+
+
+        Node(
+            package='tf2_ros',
+            executable='static_transform_publisher',
+            name='map_to_camera_init',
+            arguments=['0','0','0','0','0','0','map','camera_init']
+        ),
+
+        Node(
+            package='tf2_ros',
+            executable='static_transform_publisher',
+            name='body_to_base_link',
+            arguments=['0','0','0','0','0','0','body','base_footprint']
+        ),
+
+        Node(
+            package='tf2_ros',
+            executable='static_transform_publisher',
+            name='camera_init_to_odom',
+            arguments=['0','0','0','0','0','0','camera_init','odom']
+        ),
+
         # Launch leo_gz
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(leo_gz_launch),
@@ -53,30 +75,13 @@ def generate_launch_description():
             remappings=[('cloud_in', '/cloud_registered_body'), ('projected_map', '/map')]
         ),
 
-        Node(
-            package='tf2_ros',
-            executable='static_transform_publisher',
-            name='map_to_camera_init',
-            arguments=['0','0','0','0','0','0','map','camera_init']
-        ),
-
-        Node(
-            package='tf2_ros',
-            executable='static_transform_publisher',
-            name='body_to_base_link',
-            arguments=['0','0','0','0','0','0','body','base_footprint']
-        ),
-
-        Node(
-            package='tf2_ros',
-            executable='static_transform_publisher',
-            name='camera_init_to_odom',
-            arguments=['0','0','0','0','0','0','camera_init','odom']
-        ),
-
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(nav2_launch),
-        )
+            launch_arguments={
+                'params_file': nav2_params,
+                'use_sim_time': 'true'
+            }.items()        
+        ),    
 
     ])
 """     

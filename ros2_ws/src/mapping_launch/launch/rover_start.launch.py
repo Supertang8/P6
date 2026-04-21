@@ -18,7 +18,7 @@ def generate_launch_description():
 
     nav2_pkg = get_package_share_directory('nav2_bringup')
     nav2_launch = os.path.join(nav2_pkg, 'launch', 'navigation_launch.py')
-    nav2_params = os.path.expanduser('~/ros2_ws/src/nav2_config/config/nav2_params_sim.yaml')
+    nav2_params = os.path.expanduser('~/ros2_ws/src/navigation2/nav2_bringup/params/nav2_params.yaml')
 
 
     return LaunchDescription([
@@ -30,7 +30,7 @@ def generate_launch_description():
         # Launch fast_lio with config_file argument
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(fast_lio_launch),
-            launch_arguments={'config_file': fast_lio_config}.items()
+            launch_arguments={'config_file': fast_lio_config, 'rviz': 'false'}.items()
         ),
 
         # Launch octomap_server_node with parameters
@@ -76,6 +76,10 @@ def generate_launch_description():
 
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(nav2_launch),  
+            launch_arguments={
+                'params_file': nav2_params,
+                'use_sim_time': 'false'
+            }.items()   
         ),
     ])
 """     

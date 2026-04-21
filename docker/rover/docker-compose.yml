@@ -11,6 +11,7 @@ services:
       - type: bind
         source: ./../../ros2_ws
         target: /root/ros2_ws
+    restart: unless-stopped
     stdin_open: true
     tty: true
     devices:
