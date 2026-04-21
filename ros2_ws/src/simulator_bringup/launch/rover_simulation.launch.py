@@ -45,43 +45,64 @@ def generate_launch_description():
         ),
 
         # Launch leo_gz
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(leo_gz_launch),
+        TimerAction(
+            period=2.0,
+                actions=[
+                    IncludeLaunchDescription(
+                        PythonLaunchDescriptionSource(leo_gz_launch),
+                    ),
+                ]
         ),
 
         # Launch fast_lio with config_file argument
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(fast_lio_launch),
-            launch_arguments={'config_file': fast_lio_config}.items()
+        TimerAction(
+            period=7.0,
+                actions=[
+                    IncludeLaunchDescription(
+                        PythonLaunchDescriptionSource(fast_lio_launch),
+                        launch_arguments={'config_file': fast_lio_config}.items()
+                    ),
+                ]
         ),
 
         # Launch octomap_server_node with parameters
-        Node(
-            package='octomap_server',
-            executable='octomap_server_node',
-            name='octomap_server',
-            output='screen',
-            parameters=[{
-                'frame_id': 'camera_init',
-                'resolution': 0.1,
-                'base_frame_id': 'body',
-                'filter_speckles': True,
-                'filter_ground_plane': True,
-                'ground_filter.angle': 0.1,
-                'ground_filter.distance': 0.3,
-                'ground_filter.plane_distance': 0.8,
-                'sensor_model.max_range': 8.0
-            }],
-            remappings=[('cloud_in', '/cloud_registered_body'), ('projected_map', '/map')]
+        TimerAction(
+            period=7.0,
+                actions=[
+                    Node(
+                        package='octomap_server',
+                        executable='octomap_server_node',
+                        name='octomap_server',
+                        output='screen',
+                        parameters=[{
+                            'frame_id': 'camera_init',
+                            'resolution': 0.1,
+                            'base_frame_id': 'body',
+                            'filter_speckles': True,
+                            'filter_ground_plane': True,
+                            'ground_filter.angle': 0.1,
+                            'ground_filter.distance': 0.3,
+                            'ground_filter.plane_distance': 0.8,
+                            'sensor_model.max_range': 8.0
+                        }],
+                        remappings=[('cloud_in', '/cloud_registered_body'), ('projected_map', '/map')]
+                    ),
+                ]
         ),
 
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(nav2_launch),
-            launch_arguments={
-                'params_file': nav2_params,
-                'use_sim_time': 'true'
-            }.items()        
-        ),    
+        TimerAction(
+            period=10.0,
+                actions=[
+
+                    IncludeLaunchDescription(
+                        PythonLaunchDescriptionSource(nav2_launch),
+                        launch_arguments={
+                            'params_file': nav2_params,
+                            'use_sim_time': 'true'
+                        }.items()        
+                    ),    
+                ]
+        ),
 
     ])
 """     
