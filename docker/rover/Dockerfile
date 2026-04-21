@@ -13,6 +13,7 @@ RUN apt update && \
 	    net-tools \
     	nano \
     	cmake \
+        pip \
     	libpcl-dev \
         libeigen3-dev \
     	ros-humble-pcl-conversions \
@@ -31,15 +32,33 @@ RUN apt update && \
         ros-humble-teleop-twist-keyboard \
     && rm -rf /var/lib/apt/lists/*
 
+
 # Initialize rosdep
 RUN rosdep init || true
 RUN rosdep update
 
 # Auto-source ROS
 RUN echo "source /opt/ros/humble/setup.bash" >> /root/.bashrc
-RUN echo "alias cb='cd /root/ros2_ws && colcon build --packages-select livox_ros_driver2 fast_lio system_package mapping_launch livox_converter leo leo_msgs leo_teleop leo_description leo_gz_bringup leo_gz_plugins leo_gz_worlds leo_simulator leo_simulator simulator_bringup mapping_launch nav2_config odom_to_tf_ros2'" >> /root/.bashrc
+RUN echo "alias cb='cd /root/ros2_ws && colcon build --packages-select livox_ros_driver2 fast_lio system_package mapping_launch livox_converter leo leo_msgs leo_teleop leo_description leo_gz_bringup leo_gz_plugins leo_gz_worlds leo_simulator leo_simulator simulator_bringup mapping_launch nav2_config odom_to_tf_ros2 && colcon build --symlink-install --packages-up-to multi_lidar_calibrator --cmake-args -DCMAKE_BUILD_TYPE=Release'" >> /root/.bashrc
 RUN echo "source /root/ros2_ws/install/setup.bash" >> /root/.bashrc
 
+# Install Multi_Lica for Lidar calibration
+WORKDIR /root/ros2_ws/src
+RUN git clone --recurse-submodules https://github.com/TUMFTM/Multi_LiCa.git && \
+    cd Multi_LiCa/ && \
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install --ignore-installed --no-cache-dir -r requirements.txt
+
+
+# Install TEASER plus plus
+WORKDIR /root/
+RUN git clone https://github.com/MIT-SPARK/TEASER-plusplus.git && \
+    pip install --upgrade packaging pip && \
+    cd TEASER-plusplus && \
+    pip install .
+
+
+# Install Livox SDK
 WORKDIR /root
 RUN git clone https://github.com/Livox-SDK/Livox-SDK2.git && \
     mkdir -p Livox-SDK2/build && \
