@@ -1,64 +1,49 @@
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <std_srvs/srv/trigger.hpp>
-#include <pcl/common/transforms.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
-#include <pcl/registration/icp.h>
 #include <pcl_conversions/pcl_conversions.h>
-#include <Eigen/Dense>
-#include <memory>
+
 #include <atomic>
-#include <sstream>
-#include <vector>
 #include <chrono>
+#include <memory>
+#include <string>
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 using Trigger = std_srvs::srv::Trigger;
 
-class SystemNode : public rclcpp::Node {
+class GatherAggregatedCloudsNode : public rclcpp::Node {
 public:
-  SystemNode() : Node("system_node"), drone_cloud_received_(false), rover_cloud_received_(false) {
-    // Declare parameters
+  GatherAggregatedCloudsNode()
+  : Node("gather_aggregated_clouds"), drone_cloud_received_(false), rover_cloud_received_(false) {
     this->declare_parameter<std::string>("drone_aggregated_topic", "/drone/aggregated_pointcloud");
     this->declare_parameter<std::string>("rover_aggregated_topic", "/rover/aggregated_pointcloud");
     this->declare_parameter<std::string>("drone_trigger_service", "/drone/trigger_accumulation");
     this->declare_parameter<std::string>("rover_trigger_service", "/rover/trigger_accumulation");
+    this->declare_parameter<std::string>("drone_output_path", "drone_in_drone_frame.pcd");
+    this->declare_parameter<std::string>("rover_output_path", "rover_in_rover_frame.pcd");
     this->declare_parameter<double>("request_retry_timeout_sec", 6.0);
-    this->declare_parameter<std::vector<double>>(
-      "initial_guess_drone_to_rover",
-      std::vector<double>{
-        1.0, 0.0, 0.0, 0.0,
-        0.0, 1.0, 0.0, 0.0,
-        0.0, 0.0, 1.0, 0.0,
-        0.0, 0.0, 0.0, 1.0
-      });
-
-    // Get parameter values
-    const auto initial_guess = this->get_parameter("initial_guess_drone_to_rover").as_double_array();
-    if (initial_guess.size() == 16) {
-      for (int r = 0; r < 4; ++r) {
-        for (int c = 0; c < 4; ++c) {
-          initial_guess_drone_to_rover_(r, c) = static_cast<float>(initial_guess[r * 4 + c]);
-        }
-      }
-    } else {
-      RCLCPP_WARN(this->get_logger(), "Parameter 'initial_guess_drone_to_rover' must contain 16 values. Using identity.");
-    }
 
     drone_aggregated_topic_ = this->get_parameter("drone_aggregated_topic").as_string();
     rover_aggregated_topic_ = this->get_parameter("rover_aggregated_topic").as_string();
     drone_trigger_service_ = this->get_parameter("drone_trigger_service").as_string();
     rover_trigger_service_ = this->get_parameter("rover_trigger_service").as_string();
+    drone_output_path_ = this->get_parameter("drone_output_path").as_string();
+    rover_output_path_ = this->get_parameter("rover_output_path").as_string();
     request_retry_timeout_sec_ = this->get_parameter("request_retry_timeout_sec").as_double();
 
     RCLCPP_INFO(this->get_logger(), "Drone aggregated topic: %s", drone_aggregated_topic_.c_str());
     RCLCPP_INFO(this->get_logger(), "Rover aggregated topic: %s", rover_aggregated_topic_.c_str());
     RCLCPP_INFO(this->get_logger(), "Drone trigger service: %s", drone_trigger_service_.c_str());
     RCLCPP_INFO(this->get_logger(), "Rover trigger service: %s", rover_trigger_service_.c_str());
+    RCLCPP_INFO(this->get_logger(), "Drone output path: %s", drone_output_path_.c_str());
+    RCLCPP_INFO(this->get_logger(), "Rover output path: %s", rover_output_path_.c_str());
     RCLCPP_INFO(this->get_logger(), "Retry timeout: %.2f s", request_retry_timeout_sec_);
 
-    // Subscribe to aggregated pointcloud topics from the two remote aggregators.
     auto aggregated_qos = rclcpp::QoS(rclcpp::KeepLast(1));
     aggregated_qos.reliable();
     aggregated_qos.transient_local();
@@ -72,7 +57,6 @@ public:
       aggregated_qos,
       [this](const sensor_msgs::msg::PointCloud2::SharedPtr msg) { on_rover_cloud(msg); });
 
-    // Clients used to request one accumulated cloud from each machine.
     drone_client_ = this->create_client<Trigger>(drone_trigger_service_);
     rover_client_ = this->create_client<Trigger>(rover_trigger_service_);
 
@@ -80,7 +64,7 @@ public:
       std::chrono::seconds(1),
       [this]() { request_accumulations(); });
 
-    RCLCPP_INFO(this->get_logger(), "System node initialized. Waiting for trigger services and aggregated clouds...");
+    RCLCPP_INFO(this->get_logger(), "Gather aggregated clouds node initialized. Waiting for trigger services and aggregated clouds...");
   }
 
 private:
@@ -96,7 +80,7 @@ private:
   bool rover_requested_ = false;
   bool drone_request_in_flight_ = false;
   bool rover_request_in_flight_ = false;
-  bool icp_done_ = false;
+  bool clouds_saved_ = false;
   rclcpp::Time drone_last_request_time_;
   rclcpp::Time rover_last_request_time_;
 
@@ -104,16 +88,15 @@ private:
   std::string rover_aggregated_topic_;
   std::string drone_trigger_service_;
   std::string rover_trigger_service_;
-  double request_retry_timeout_sec_ = 6.0;
-
-  Eigen::Matrix4f initial_guess_drone_to_rover_ = Eigen::Matrix4f::Identity();
-  Eigen::Matrix4f drone_lidar_to_rover_lidar_transform_ = Eigen::Matrix4f::Identity();
+  std::string drone_output_path_;
+  std::string rover_output_path_;
+  double request_retry_timeout_sec_ = 12.0;
 
   pcl::PointCloud<pcl::PointXYZ> drone_lidar_cloud_;
   pcl::PointCloud<pcl::PointXYZ> rover_lidar_cloud_;
 
   void request_accumulations() {
-    if (icp_done_) {
+    if (clouds_saved_) {
       return;
     }
 
@@ -185,82 +168,75 @@ private:
   }
 
   void on_drone_cloud(const sensor_msgs::msg::PointCloud2::SharedPtr msg) {
-    if (!icp_done_) {
-      pcl::fromROSMsg(*msg, drone_lidar_cloud_);
-      drone_cloud_received_ = true;
-      RCLCPP_INFO(this->get_logger(), "Received drone aggregated cloud with %zu points", drone_lidar_cloud_.size());
-      run_icp_if_ready();
-    }
-  }
-
-  void on_rover_cloud(const sensor_msgs::msg::PointCloud2::SharedPtr msg) {
-    if (!icp_done_) {
-      pcl::fromROSMsg(*msg, rover_lidar_cloud_);
-      rover_cloud_received_ = true;
-      RCLCPP_INFO(this->get_logger(), "Received rover aggregated cloud with %zu points", rover_lidar_cloud_.size());
-      run_icp_if_ready();
-    }
-  }
-
-  void run_icp_if_ready() {
-    if (icp_done_ || !drone_cloud_received_ || !rover_cloud_received_) return;
-
-    if (drone_lidar_cloud_.empty() || rover_lidar_cloud_.empty()) {
-      RCLCPP_ERROR(this->get_logger(), "Cannot run ICP: one or both accumulated clouds are empty.");
-      icp_done_ = true;
+    if (clouds_saved_) {
       return;
     }
 
-    RCLCPP_INFO(this->get_logger(), "Running ICP on aggregated clouds...");
-    RCLCPP_INFO(this->get_logger(), "Drone cloud: %zu points, Rover cloud: %zu points",
-                drone_lidar_cloud_.size(), rover_lidar_cloud_.size());
+    pcl::fromROSMsg(*msg, drone_lidar_cloud_);
+    drone_cloud_received_ = true;
+    RCLCPP_INFO(this->get_logger(), "Received drone aggregated cloud with %zu points", drone_lidar_cloud_.size());
+    save_clouds_if_ready();
+  }
 
-    pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
-    icp.setInputSource(drone_lidar_cloud_.makeShared());
-    icp.setInputTarget(rover_lidar_cloud_.makeShared());
+  void on_rover_cloud(const sensor_msgs::msg::PointCloud2::SharedPtr msg) {
+    if (clouds_saved_) {
+      return;
+    }
 
-    pcl::PointCloud<pcl::PointXYZ> aligned;
-    icp.align(aligned, initial_guess_drone_to_rover_);
-    icp_done_ = true;
+    pcl::fromROSMsg(*msg, rover_lidar_cloud_);
+    rover_cloud_received_ = true;
+    RCLCPP_INFO(this->get_logger(), "Received rover aggregated cloud with %zu points", rover_lidar_cloud_.size());
+    save_clouds_if_ready();
+  }
 
-    if (!icp.hasConverged()) {
-      RCLCPP_ERROR(this->get_logger(), "ICP did not converge.");
+  void save_clouds_if_ready() {
+    if (clouds_saved_ || !drone_cloud_received_ || !rover_cloud_received_) {
+      return;
+    }
+
+    if (drone_lidar_cloud_.empty() || rover_lidar_cloud_.empty()) {
+      RCLCPP_ERROR(this->get_logger(), "Cannot save clouds: one or both accumulated clouds are empty.");
+      clouds_saved_ = true;
+      request_timer_->cancel();
       return;
     }
 
     request_timer_->cancel();
 
-    drone_lidar_to_rover_lidar_transform_ = icp.getFinalTransformation();
-    std::ostringstream oss;
-    oss << drone_lidar_to_rover_lidar_transform_;
-    RCLCPP_INFO(this->get_logger(), "ICP converged. Fitness: %.8f", icp.getFitnessScore());
-    RCLCPP_INFO(this->get_logger(), "Transform (drone cloud -> rover cloud):\n%s", oss.str().c_str());
+    auto create_parent_dir = [&](const std::string &path_str) {
+      fs::path path(path_str);
+      if (path.has_parent_path()) {
+        fs::create_directories(path.parent_path());
+      }
+    };
 
-    pcl::PointCloud<pcl::PointXYZ> drone_in_rover_cloud_initial_guess;
-    pcl::PointCloud<pcl::PointXYZ> drone_in_rover_cloud_icp;
-    pcl::transformPointCloud(drone_lidar_cloud_, drone_in_rover_cloud_initial_guess, initial_guess_drone_to_rover_);
-    pcl::transformPointCloud(drone_lidar_cloud_, drone_in_rover_cloud_icp, drone_lidar_to_rover_lidar_transform_);
+    try {
+      create_parent_dir(rover_output_path_);
+      create_parent_dir(drone_output_path_);
+    } catch (const fs::filesystem_error & err) {
+      RCLCPP_ERROR(this->get_logger(), "Failed to create output directory: %s", err.what());
+      return;
+    }
 
-    if (pcl::io::savePCDFileBinary("rover_in_rover_frame.pcd", rover_lidar_cloud_) != 0 ||
-        pcl::io::savePCDFileBinary("drone_in_drone_frame.pcd", drone_lidar_cloud_) != 0 ||
-        pcl::io::savePCDFileBinary("drone_in_rover_frame_initial_guess.pcd", drone_in_rover_cloud_initial_guess) != 0 ||
-        pcl::io::savePCDFileBinary("drone_in_rover_frame_icp.pcd", drone_in_rover_cloud_icp) != 0) {
+    if (pcl::io::savePCDFileBinary(rover_output_path_, rover_lidar_cloud_) != 0 ||
+        pcl::io::savePCDFileBinary(drone_output_path_, drone_lidar_cloud_) != 0) {
       RCLCPP_ERROR(this->get_logger(), "Failed to save one or more output PCD files.");
       return;
     }
+
+    clouds_saved_ = true;
     RCLCPP_INFO(
       this->get_logger(),
-      "Saved PCDs: %s, %s, %s, %s",
-      "rover_in_rover_frame.pcd",
-      "drone_in_drone_frame.pcd",
-      "drone_in_rover_frame_initial_guess.pcd",
-      "drone_in_rover_frame_icp.pcd");
+      "Saved PCDs: %s, %s",
+      rover_output_path_.c_str(),
+      drone_output_path_.c_str());
+    rclcpp::shutdown();
   }
 };
 
-int main(int argc, char *argv[]) {
+int main(int argc, char * argv[]) {
   rclcpp::init(argc, argv);
-  auto node = std::make_shared<SystemNode>();
+  auto node = std::make_shared<GatherAggregatedCloudsNode>();
   rclcpp::spin(node);
   rclcpp::shutdown();
   return 0;
