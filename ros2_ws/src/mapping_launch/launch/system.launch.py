@@ -31,12 +31,31 @@ def generate_launch_description():
             f"Could not locate Multi_LiCa directory, tried: {multi_lica_src_candidates}")
     calibration_files_dir = os.path.join(multi_lica_src, 'data', 'drone_to_rover_calibration')
 
+    nav2_pkg = get_package_share_directory('nav2_bringup')
+    nav2_launch = os.path.join(nav2_pkg, 'launch', 'navigation_launch.py')
+    nav2_params = os.path.expanduser('~/ros2_ws/src/navigation2/nav2_bringup/params/nav2_params.yaml')
+
+
     rviz = LaunchConfiguration('rviz')
+    start_rover = LaunchConfiguration('start_rover')
+    start_drone = LaunchConfiguration('start_drone')
 
     declare_rviz_cmd = DeclareLaunchArgument(
         'rviz',
         default_value='true',
         description='Start RViz with the dual-robot config'
+    )
+
+    declare_start_rover_cmd = DeclareLaunchArgument(
+        'start_rover',
+        default_value='true',
+        description='Set to true if runnung on rover or rosbag'
+    )
+
+    declare_start_drone_cmd = DeclareLaunchArgument(
+        'start_drone',
+        default_value='true',
+        description='Set to true if runnung on rosbag'
     )
 
     cloud_saver_node = Node(
@@ -77,6 +96,7 @@ def generate_launch_description():
             'namespace': 'drone',
             'rviz': 'false',
         }.items(),
+        condition=IfCondition(start_drone),
     )
 
     rover_mapping = TimerAction(
@@ -94,6 +114,7 @@ def generate_launch_description():
                 }.items(),
             )
         ],
+        condition=IfCondition(start_rover),
     )
 
     camera_init_from_raw_lidar = Node(
@@ -117,7 +138,7 @@ def generate_launch_description():
         package='merge_map',
         executable='merge_map',
         output='screen',
-        parameters=[{'use_sim_time': True}],
+        parameters=[{'use_sim_time': False}],
         remappings=[
             ('/map1', '/rover/projected_map'),
             ('/map2', '/drone/projected_map'),
@@ -133,13 +154,60 @@ def generate_launch_description():
         condition=IfCondition(rviz),
     )
 
+    map_expander = Node(
+            package='livox_converter',
+            executable='map_expander',
+            name='map_expander',
+        )
+
+    nav2_node = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(nav2_launch),
+        launch_arguments={'params_file': nav2_params}.items(),
+    )
+
+    static_base_link_frame = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        arguments=[
+            '--x', '0', '--y', '0', '--z', '0', '--qx', '0.0', '--qy', '0.0', '--qz', '0.0', '--qw', '1.0',
+            '--frame-id', ['rover/body'],
+            '--child-frame-id', ['base_link'],
+        ],
+    )
+
+    static_map_frame = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        arguments=[
+            '--x', '0', '--y', '0', '--z', '0', '--qx', '0.0', '--qy', '0.0', '--qz', '0.0', '--qw', '1.0',
+            '--frame-id', ['map'],
+            '--child-frame-id', ['rover/camera_init'],
+        ],
+    )
+
+    static_odom_frame = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        arguments=[
+            '--x', '0', '--y', '0', '--z', '0', '--qx', '0.0', '--qy', '0.0', '--qz', '0.0', '--qw', '1.0',
+            '--frame-id', ['rover/camera_init'],
+            '--child-frame-id', ['odom'],
+        ],
+    )
+
     return LaunchDescription([
         declare_rviz_cmd,
+        declare_start_rover_cmd,
+        declare_start_drone_cmd,
         rviz_node,
+        static_base_link_frame,
+        static_map_frame,
+        static_odom_frame,
         cloud_saver_node,
         drone_mapping,
         rover_mapping,
         merge_map_node,
+        map_expander,
         RegisterEventHandler(
             event_handler=OnProcessExit(
                 target_action=cloud_saver_node,
@@ -149,7 +217,8 @@ def generate_launch_description():
         RegisterEventHandler(
             event_handler=OnProcessExit(
                 target_action=multi_lica,
-                on_exit=[camera_init_from_raw_lidar],
+                on_exit=[camera_init_from_raw_lidar, nav2_node],
             )
         ),
+
     ])
