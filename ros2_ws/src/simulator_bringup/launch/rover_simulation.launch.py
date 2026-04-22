@@ -44,6 +44,12 @@ def generate_launch_description():
             arguments=['0','0','0','0','0','0','camera_init','odom']
         ),
 
+        Node(
+            package='livox_converter',
+            executable='map_expander',
+            name='map_expander',
+        ),
+
         # Launch leo_gz
         TimerAction(
             period=2.0,
@@ -85,7 +91,7 @@ def generate_launch_description():
                             'ground_filter.plane_distance': 0.8,
                             'sensor_model.max_range': 8.0
                         }],
-                        remappings=[('cloud_in', '/cloud_registered_body'), ('projected_map', '/map')]
+                        remappings=[('cloud_in', '/cloud_registered_body'), ('projected_map', '/merged_map')]
                     ),
                 ]
         ),
