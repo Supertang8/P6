@@ -18,19 +18,19 @@ def generate_launch_description():
     rviz = LaunchConfiguration('rviz')
 
     declare_world_namespace_cmd = DeclareLaunchArgument(
-        'world_namespace', default_value='',
+        'world_namespace', default_value='rover',
         description='ROS namespace used to isolate mapper world frame topic'
     )
     declare_body_namespace_cmd = DeclareLaunchArgument(
-        'body_namespace', default_value='',
+        'body_namespace', default_value='drone',
         description='ROS namespace used to isolate mapper body frame topic'
     )
     declare_rviz_cmd = DeclareLaunchArgument(
-        'rviz', default_value='true',
+        'rviz', default_value='false',
         description='Use RViz to monitor results'
     )
     declare_namespace_cmd = DeclareLaunchArgument(
-        'namespace', default_value='',
+        'namespace', default_value='drone',
         description='ROS namespace used to isolate all mapper topics'
     )
 

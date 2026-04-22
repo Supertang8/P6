@@ -4,6 +4,7 @@ from ament_index_python.packages import get_package_share_directory
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, RegisterEventHandler, TimerAction
+from launch.conditions import IfCondition
 from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
@@ -13,6 +14,8 @@ from launch_ros.actions import Node
 def generate_launch_description():
     mapping_launch_path = os.path.join(
         get_package_share_directory('mapping_launch'), 'launch', 'mapping.launch.py')
+    rviz_cfg = os.path.join(
+        get_package_share_directory('mapping_launch'), 'rviz', 'dual_robot_rviz.rviz')
 
     # Find the path to the Multi_LiCa src
     launch_dir = os.path.dirname(__file__)
@@ -32,8 +35,8 @@ def generate_launch_description():
 
     declare_rviz_cmd = DeclareLaunchArgument(
         'rviz',
-        default_value='false',
-        description='Enable RViz in each mapper instance'
+        default_value='true',
+        description='Start RViz with the dual-robot config'
     )
 
     cloud_saver_node = Node(
@@ -72,7 +75,7 @@ def generate_launch_description():
             'body_namespace': 'drone',
             'world_namespace': 'rover',
             'namespace': 'drone',
-            'rviz': rviz,
+            'rviz': 'false',
         }.items(),
     )
 
@@ -87,7 +90,7 @@ def generate_launch_description():
                     'body_namespace': 'rover',
                     'world_namespace': 'rover',
                     'namespace': 'rover',
-                    'rviz': rviz,
+                    'rviz': 'false',
                 }.items(),
             )
         ],
@@ -121,8 +124,18 @@ def generate_launch_description():
         ],
     )
 
+    rviz_node = Node(
+        package='rviz2',
+        executable='rviz2',
+        name='rviz2',
+        arguments=['-d', rviz_cfg],
+        output='screen',
+        condition=IfCondition(rviz),
+    )
+
     return LaunchDescription([
         declare_rviz_cmd,
+        rviz_node,
         cloud_saver_node,
         drone_mapping,
         rover_mapping,
