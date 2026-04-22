@@ -7,8 +7,9 @@ parent camera_init -> child camera_init.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
-from math import sqrt
+from math import cos, radians, sin, sqrt
 from typing import Optional
 
 import rclpy
@@ -101,6 +102,32 @@ def _parse_vec_param(value, expected_len: int, param_name: str) -> list[float]:
     return values
 
 
+def _quat_from_rpy_degrees(roll_deg: float, pitch_deg: float, yaw_deg: float) -> list[float]:
+    r, p, y = radians(roll_deg), radians(pitch_deg), radians(yaw_deg)
+    cr, sr = cos(r * 0.5), sin(r * 0.5)
+    cp, sp = cos(p * 0.5), sin(p * 0.5)
+    cy, sy = cos(y * 0.5), sin(y * 0.5)
+    return [
+        sr * cp * cy - cr * sp * sy,
+        cr * sp * cy + sr * cp * sy,
+        cr * cp * sy - sr * sp * cy,
+        cr * cp * cy + sr * sp * sy,
+    ]
+
+
+def _load_calibration_transform(path: str) -> Transform:
+    with open(path, 'r') as f:
+        text = f.read()
+    num = r'[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?'
+    xyz_match = re.search(rf'calibrated xyz\s*=\s*({num})\s+({num})\s+({num})', text)
+    rpy_match = re.search(rf'calibrated rpy\s*=\s*({num})\s+({num})\s+({num})', text)
+    if xyz_match is None or rpy_match is None:
+        raise ValueError(f'Could not parse calibrated xyz/rpy from {path}')
+    xyz = [float(g) for g in xyz_match.groups()]
+    rpy_deg = [float(g) for g in rpy_match.groups()]
+    return Transform(t=xyz, q=_quat_from_rpy_degrees(*rpy_deg))
+
+
 class CameraInitTfFromRawLidar(Node):
     """Publish corrected camera_init-parent -> camera_init-child static TF."""
 
@@ -111,8 +138,7 @@ class CameraInitTfFromRawLidar(Node):
         self.declare_parameter('child_namespace', 'drone')
         self.declare_parameter('lookup_rate_hz', 5.0)
 
-        self.declare_parameter('raw_lidar_parent_to_child_xyz', '0.0,0.0,0.0')
-        self.declare_parameter('raw_lidar_parent_to_child_xyzw', '0.0,0.0,0.0,1.0')
+        self.declare_parameter('calibration_file', '')
 
         # T_B_L for each robot (body/IMU -> LiDAR), from FAST_LIO extrinsics.
         self.declare_parameter('parent_body_to_lidar_xyz', '0.0,0.0,0.0')
@@ -124,18 +150,10 @@ class CameraInitTfFromRawLidar(Node):
         self.child_namespace = str(self.get_parameter('child_namespace').value)
         self.lookup_rate_hz = float(self.get_parameter('lookup_rate_hz').value)
 
-        self.t_lidar_parent_child = Transform(
-            t=_parse_vec_param(
-                self.get_parameter('raw_lidar_parent_to_child_xyz').value,
-                3,
-                'raw_lidar_parent_to_child_xyz',
-            ),
-            q=_parse_vec_param(
-                self.get_parameter('raw_lidar_parent_to_child_xyzw').value,
-                4,
-                'raw_lidar_parent_to_child_xyzw',
-            ),
-        )
+        calibration_file = str(self.get_parameter('calibration_file').value)
+        if not calibration_file:
+            raise ValueError('Parameter calibration_file must be set to a valid file path')
+        self.t_lidar_parent_child = _load_calibration_transform(calibration_file)
         self.t_parent_body_lidar = Transform(
             t=_parse_vec_param(
                 self.get_parameter('parent_body_to_lidar_xyz').value,

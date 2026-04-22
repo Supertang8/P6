@@ -60,6 +60,25 @@ def generate_launch_description():
         }],
     )
 
+    # Pointcloud aggregator node
+    aggregator_node = Node(
+        package='calibrate_lidars',
+        executable='pointcloud_aggregator_node',
+        name='pointcloud_aggregator_node',
+        namespace=namespace,
+        output='screen',
+        parameters=[
+            {'lidar_topic': 'livox/lidar'},
+            {'aggregated_topic': 'calibration_pointcloud'},
+            {'trigger_service': 'trigger_accumulation'},
+            {'output_frame_id': [namespace, '_lidar']},
+            {'messages_to_accumulate': 5},
+            {'downsample_leaf_size': 0.05},
+            {'min_dist': 1.0},
+            {'max_dist': 10.0},
+        ],
+    )
+
     fastlio = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(fast_lio_launch_path),
         launch_arguments={
@@ -68,13 +87,6 @@ def generate_launch_description():
             'namespace': namespace,
         }.items(),
     )
-
-    #tf_namespace_republisher = Node(
-    #    package='mapping_launch',
-    #    executable='tf_namespace_republisher',
-    #    namespace=namespace,
-    #    output='screen',
-    #)
 
     # Octomap (delayed to avoid TF startup race).
     octomap = TimerAction(
@@ -119,7 +131,7 @@ def generate_launch_description():
         declare_namespace_cmd,
         odom_2_camera_init,
         odom_2_base_link,
-        #tf_namespace_republisher,
         fastlio,
         octomap,
+        aggregator_node,
     ])
