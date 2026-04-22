@@ -12,22 +12,6 @@ RUN apt update && \
 		net-tools \
     	nano \
     	cmake \
-    	libpcl-dev \
-        libeigen3-dev \
-    	ros-humble-pcl-conversions \
-        ros-humble-pcl-msgs \
-        ros-humble-pcl-ros \
-	    ros-humble-tf2-ros \
-	    ros-humble-tf2-eigen \
-	    ros-humble-rviz2 \
-        ros-humble-ros-gz \
-        ros-humble-octomap \
-        ros-humble-octomap-msgs \
-        ros-humble-octomap-server \
-        ros-humble-octomap-rviz-plugins \
-        ros-humble-teleop-twist-keyboard \
-        ros-humble-bondcpp \
-        ros-humble-test-msgs \
     	wget
  
 #Mavlink communcation
