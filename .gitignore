@@ -231,5 +231,12 @@ pip-selfcheck.json
 #ros2 crash
 core.*
 
+#Multi_LiCa
+calibration_result.txt
+stitched_initial.pcd
+stitched_transformed.pcd
+lidar_1.pcd
+lidar_2.pcd
+
 # End of https://www.toptal.com/developers/gitignore/api/venv,ros2,python,git
 

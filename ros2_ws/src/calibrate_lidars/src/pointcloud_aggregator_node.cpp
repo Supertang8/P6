@@ -20,14 +20,14 @@ public:
       collecting_(false) {
     
     // Declare parameters
-    this->declare_parameter<std::string>("lidar_topic", "/livox/lidar");
-    this->declare_parameter<std::string>("aggregated_topic", "/aggregated_pointcloud/local");
-    this->declare_parameter<std::string>("trigger_service", "/trigger_accumulation");
+    this->declare_parameter<std::string>("lidar_topic", "livox/lidar");
+    this->declare_parameter<std::string>("aggregated_topic", "aggregated_pointcloud");
+    this->declare_parameter<std::string>("trigger_service", "trigger_accumulation");
     this->declare_parameter<std::string>("output_frame_id", "livox_frame");
     this->declare_parameter<int>("messages_to_accumulate", 10);
     this->declare_parameter<float>("downsample_leaf_size", 0.05f);
-    this->declare_parameter<float>("min_dist", 0.0f);
-    this->declare_parameter<float>("max_dist", 100.0f);
+    this->declare_parameter<float>("min_dist", 1.0f);
+    this->declare_parameter<float>("max_dist", 10.0f);
 
     // Get parameter values
     lidar_topic_ = this->get_parameter("lidar_topic").as_string();
@@ -83,7 +83,7 @@ public:
           this->handle_trigger(response);
       });
 
-    RCLCPP_INFO(this->get_logger(), "Pointcloud aggregator node initialized in single-lidar mode.");
+    RCLCPP_INFO(this->get_logger(), "Pointcloud aggregator node initialized.");
   }
 
 private:
@@ -97,8 +97,8 @@ private:
   size_t messages_to_accumulate_ = 10;
   size_t lidar_msgs_ = 0;
   float downsample_leaf_size_ = 0.05f;
-  float min_dist_ = 0.0f;
-  float max_dist_ = 100.0f;
+  float min_dist_ = 1.0f;
+  float max_dist_ = 10.0f;
   float min_dist_sq_ = 0.0f;
   float max_dist_sq_ = 10000.0f;
   size_t points_received_ = 0;

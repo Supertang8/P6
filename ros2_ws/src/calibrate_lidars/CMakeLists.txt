@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(system_package)
+project(calibrate_lidars)
 
 # Default to C++17
 if(NOT CMAKE_CXX_STANDARD)
@@ -28,19 +28,15 @@ add_executable(pointcloud_aggregator_node src/pointcloud_aggregator_node.cpp)
 ament_target_dependencies(pointcloud_aggregator_node rclcpp livox_ros_driver2 sensor_msgs std_srvs pcl_conversions)
 target_link_libraries(pointcloud_aggregator_node ${PCL_LIBRARIES})
 
-# Build the system node executable
-add_executable(system_node src/system_node.cpp)
-ament_target_dependencies(system_node rclcpp sensor_msgs std_srvs pcl_conversions)
-target_link_libraries(system_node ${PCL_LIBRARIES})
+# Build the aggregated cloud saver executable
+add_executable(gather_aggregated_clouds src/gather_aggregated_clouds.cpp)
+ament_target_dependencies(gather_aggregated_clouds rclcpp sensor_msgs std_srvs pcl_conversions)
+target_link_libraries(gather_aggregated_clouds ${PCL_LIBRARIES})
 
 # Install executables
 install(TARGETS
   pointcloud_aggregator_node
-  system_node
+  gather_aggregated_clouds
   DESTINATION lib/${PROJECT_NAME})
-
-# Install launch files
-install(DIRECTORY launch/
-  DESTINATION share/${PROJECT_NAME}/launch)
 
 ament_package()
