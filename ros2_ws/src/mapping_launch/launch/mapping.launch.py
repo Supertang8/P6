@@ -100,7 +100,7 @@ def generate_launch_description():
                 output='screen',
                 parameters=[{
                     'frame_id': [world_namespace, '/camera_init'],
-                    'resolution': 0.05,
+                    'resolution': 0.2,
                     'base_frame_id': [body_namespace, '/base_link'],
                     'filter_speckles': True,
                     'filter_ground_plane': True,

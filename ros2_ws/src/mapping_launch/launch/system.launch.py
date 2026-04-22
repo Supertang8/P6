@@ -126,6 +126,7 @@ def generate_launch_description():
         cloud_saver_node,
         drone_mapping,
         rover_mapping,
+        merge_map_node,
         RegisterEventHandler(
             event_handler=OnProcessExit(
                 target_action=cloud_saver_node,
@@ -136,12 +137,6 @@ def generate_launch_description():
             event_handler=OnProcessExit(
                 target_action=multi_lica,
                 on_exit=[camera_init_from_raw_lidar],
-            )
-        ),
-        RegisterEventHandler(
-            event_handler=OnProcessExit(
-                target_action=camera_init_from_raw_lidar,
-                on_exit=[merge_map_node],
             )
         ),
     ])
