@@ -9,7 +9,7 @@ source /root/ros2_ws/install/setup.bash
 MicroXRCEAgent serial --dev /dev/ttyAMA0 -b 921600 &
 
 # Launch ROS2 script
-ros2 run drone_controller velocityController &
+ros2 run drone_controller velocityControllerCBF &
 ros2 run px4_controller velocityToDrone &
 ros2 launch livox_ros_driver2 msg_MID360_drone_launch.py &
 ros2 launch mapping_launch mapping.launch.py
