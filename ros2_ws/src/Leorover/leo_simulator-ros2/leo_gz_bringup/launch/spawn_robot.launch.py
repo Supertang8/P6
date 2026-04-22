@@ -74,9 +74,18 @@ def spawn_robot(context: LaunchContext, namespace: LaunchConfiguration):
             "robot_description",
             "-name",
             robot_gazebo_name,
-            "-z",
-            "0.5",
+
             "-allow_renaming", "true",
+
+            # Position
+            "-x", "1.0",
+            "-y", "4.0",
+            "-z", "0.5",
+
+            # Orientation (in radians)
+            "-R", "0.0",   # roll
+            "-P", "0.0",   # pitch
+            "-Y", "-1",  # yaw (≈ 90 degrees)
         ],
     )
 
