@@ -91,7 +91,7 @@ def generate_launch_description():
                             'ground_filter.plane_distance': 0.8,
                             'sensor_model.max_range': 8.0
                         }],
-                        remappings=[('cloud_in', '/cloud_registered_body'), ('projected_map', '/merged_map')]
+                        remappings=[('cloud_in', '/cloud_registered_body'), ('projected_map', '/merge_map')]
                     ),
                 ]
         ),

@@ -21,7 +21,7 @@ class CostmapExpander(Node):
 
         self.create_subscription(
             OccupancyGrid,
-            '/merged_map',
+            '/merge_map',
             self.costmap_callback,
             10)
 
