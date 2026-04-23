@@ -75,9 +75,9 @@ RUN chmod +x /root/entrypoint.sh
 
 WORKDIR /root/ros2_ws
 
-ENTRYPOINT ["/root/entrypoint.sh"]
+#ENTRYPOINT ["/root/entrypoint.sh"]
 
-#CMD ["bash"]
+CMD ["bash"]
 
 
 
