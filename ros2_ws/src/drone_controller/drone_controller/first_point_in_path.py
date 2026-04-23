@@ -24,7 +24,6 @@ class firstPointInPath(Node):
             10 
         )
         self.publisher = self.create_publisher(PoseStamped, '/offboard/setpoint',10)
-        self.get_logger().info('Subscribed to /plan topic')
 
     def map_callback(self, msg: OccupancyGrid):
         self.map = msg
@@ -56,15 +55,11 @@ class firstPointInPath(Node):
         poses = msg.poses
 
         if self.map is None:
-            self.get_logger().warn('No map received yet')
             return
     
         if not poses:
-            self.get_logger().info('Received empty path')
             return
 
-        self.get_logger().info(f'Received path with {len(poses)} poses. and map')
-    
         for i, pose_stamped in enumerate(poses):
             pos = pose_stamped.pose.position
             cell = self.world_to_grid(pos.x, pos.y)
@@ -79,12 +74,6 @@ class firstPointInPath(Node):
             cell_value = self.get_cell_value(col, row)
 
             if cell_value == -1:
-                self.get_logger().info(
-                    f'First unknown point in path found:\n'
-                    f'  Index    : {i}\n'
-                    f'  Position : x={pos.x:.4f}, y={pos.y:.4f}, z={pos.z:.4f}\n'
-                    f'  Grid cell: col={col}, row={row}'
-                )
             
                 setpoint = PoseStamped()
                 setpoint.header.stamp = self.get_clock().now().to_msg()
