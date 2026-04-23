@@ -171,7 +171,7 @@ def generate_launch_description():
         arguments=[
             '--x', '0', '--y', '0', '--z', '0', '--qx', '0.0', '--qy', '0.0', '--qz', '0.0', '--qw', '1.0',
             '--frame-id', ['rover/body'],
-            '--child-frame-id', ['base_link'],
+            '--child-frame-id', ['base_footprint'],
         ],
     )
 
