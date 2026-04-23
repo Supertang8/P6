@@ -217,7 +217,7 @@ def generate_launch_description():
         RegisterEventHandler(
             event_handler=OnProcessExit(
                 target_action=multi_lica,
-                on_exit=[camera_init_from_raw_lidar, nav2_node],
+                on_exit=[camera_init_from_raw_lidar],
             )
         ),
 

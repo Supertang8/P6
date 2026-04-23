@@ -69,27 +69,15 @@ RUN git clone https://github.com/Livox-SDK/Livox-SDK2.git && \
     make install && \
     ldconfig
 
-WORKDIR /root/ros2_ws
-
-RUN git clone --depth 1 https://github.com/ros-navigation/navigation2.git --branch $ROS_DISTRO ./src/navigation2 
-
-RUN apt update && \
-rosdep install -y \
---from-paths ./src \
---ignore-src \
---skip-keys="gazebo_ros gazebo_ros_pkgs"
-
-
-WORKDIR /root
 
 COPY entrypoint.sh /root/entrypoint.sh
 RUN chmod +x /root/entrypoint.sh
 
 WORKDIR /root/ros2_ws
 
-#ENTRYPOINT ["/root/entrypoint.sh"]
+ENTRYPOINT ["/root/entrypoint.sh"]
 
-CMD ["bash"]
+#CMD ["bash"]
 
 
 
