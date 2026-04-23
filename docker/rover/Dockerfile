@@ -37,6 +37,19 @@ RUN apt update && \
 RUN rosdep init || true
 RUN rosdep update
 
+# Copy only package manifests so rosdep can resolve dependencies
+COPY ros2_ws/src /tmp/ws/src
+WORKDIR /tmp/ws
+
+# Install all ROS dependencies from package.xml files
+RUN apt-get update && \
+    rosdep install --from-paths src --ignore-src -r -y\
+    --from-paths ./src \
+    --ignore-src \
+    --skip-keys="gazebo_ros gazebo_ros_pkgs"
+    
+# Clean up (since you'll mount the real workspace at runtime)
+RUN rm -rf /tmp/ws
 
 # Auto-source ROS
 RUN echo "source /opt/ros/humble/setup.bash" >> /root/.bashrc
@@ -70,14 +83,14 @@ RUN git clone https://github.com/Livox-SDK/Livox-SDK2.git && \
     ldconfig
 
 
-COPY entrypoint.sh /root/entrypoint.sh
+COPY docker/rover/entrypoint.sh /root/entrypoint.sh
 RUN chmod +x /root/entrypoint.sh
 
 WORKDIR /root/ros2_ws
 
-#ENTRYPOINT ["/root/entrypoint.sh"]
+ENTRYPOINT ["/root/entrypoint.sh"]
 
-CMD ["bash"]
+#CMD ["bash"]
 
 
 
