@@ -1,6 +1,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <livox_ros_driver2/msg/custom_msg.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <std_msgs/msg/empty.hpp>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/filters/voxel_grid.h>
@@ -24,6 +25,7 @@ public:
     this->declare_parameter<std::string>("aggregated_topic", "aggregated_pointcloud");
     this->declare_parameter<std::string>("trigger_service", "trigger_accumulation");
     this->declare_parameter<std::string>("output_frame_id", "livox_frame");
+    this->declare_parameter<std::string>("shutdown_topic", "shutdown");
     this->declare_parameter<int>("messages_to_accumulate", 10);
     this->declare_parameter<float>("downsample_leaf_size", 0.05f);
     this->declare_parameter<float>("min_dist", 1.0f);
@@ -68,6 +70,15 @@ public:
       rclcpp::SensorDataQoS(),
       [this](const CustomMsg::SharedPtr msg) { on_lidar(msg); });
 
+    const std::string shutdown_topic = this->get_parameter("shutdown_topic").as_string();
+    sub_shutdown_ = this->create_subscription<std_msgs::msg::Empty>(
+      shutdown_topic,
+      rclcpp::QoS(1).reliable().transient_local(),
+      [this](std_msgs::msg::Empty::UniquePtr) {
+        RCLCPP_INFO(this->get_logger(), "Received shutdown signal; exiting.");
+        rclcpp::shutdown();
+      });
+
     auto aggregated_qos = rclcpp::QoS(rclcpp::KeepLast(1));
     aggregated_qos.reliable();
     aggregated_qos.transient_local();
@@ -88,6 +99,7 @@ public:
 
 private:
   rclcpp::Subscription<CustomMsg>::SharedPtr sub_lidar_;
+  rclcpp::Subscription<std_msgs::msg::Empty>::SharedPtr sub_shutdown_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_aggregated_;
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr srv_trigger_;
 

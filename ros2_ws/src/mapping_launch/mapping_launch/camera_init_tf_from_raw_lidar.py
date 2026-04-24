@@ -15,6 +15,8 @@ from typing import Optional
 import rclpy
 from geometry_msgs.msg import TransformStamped
 from rclpy.node import Node
+from rclpy.qos import QoSDurabilityPolicy, QoSProfile, QoSReliabilityPolicy
+from std_msgs.msg import Empty
 from tf2_ros import Buffer, TransformListener
 from tf2_ros import ConnectivityException, ExtrapolationException, LookupException
 from tf2_ros.static_transform_broadcaster import StaticTransformBroadcaster
@@ -198,6 +200,20 @@ class CameraInitTfFromRawLidar(Node):
 
         self._broadcaster = StaticTransformBroadcaster(self)
 
+        _transient_reliable = QoSProfile(
+            depth=1,
+            reliability=QoSReliabilityPolicy.RELIABLE,
+            durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
+        )
+        self._shutdown_pubs = [
+            self.create_publisher(
+                Empty,
+                _topic_with_namespace(ns, 'shutdown'),
+                _transient_reliable,
+            )
+            for ns in (self.parent_namespace, self.child_namespace)
+        ]
+
     @staticmethod
     def _transform_stamped_to_transform(msg: TransformStamped) -> Transform:
         p = msg.transform.translation
@@ -249,6 +265,13 @@ class CameraInitTfFromRawLidar(Node):
         self.get_logger().info(
             'Published static TF '
             f'{tf_msg.header.frame_id} -> {tf_msg.child_frame_id} from raw LiDAR transform.'
+        )
+
+        for pub in self._shutdown_pubs:
+            pub.publish(Empty())
+        self.get_logger().info(
+            f'Sent shutdown signal to pointcloud aggregators in '
+            f'{self.parent_namespace} and {self.child_namespace}.'
         )
 
 

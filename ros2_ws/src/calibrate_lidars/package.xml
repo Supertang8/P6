@@ -12,6 +12,7 @@
   <depend>rclcpp</depend>
   <depend>livox_ros_driver2</depend>
   <depend>sensor_msgs</depend>
+  <depend>std_msgs</depend>
   <depend>std_srvs</depend>
   <depend>pcl_conversions</depend>
   <depend>pcl_ros</depend>

@@ -3,8 +3,9 @@ import os.path
 from ament_index_python.packages import get_package_share_directory
 
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, TimerAction
+from launch.actions import DeclareLaunchArgument, RegisterEventHandler
 from launch.actions import IncludeLaunchDescription
+from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
@@ -97,41 +98,43 @@ def generate_launch_description():
         }.items(),
     )
 
-    # Octomap (delayed to avoid TF startup race).
-    octomap = TimerAction(
-        period=2.0,
-        actions=[
-            Node(
-                package='octomap_server',
-                executable='octomap_server_node',
-                name='octomap_server',
-                namespace=namespace,
-                output='screen',
-                parameters=[{
-                    'frame_id': [world_namespace, '/camera_init'],
-                    'resolution': 0.2,
-                    'base_frame_id': [body_namespace, '/base_link'],
-                    'filter_speckles': True,
-                    'filter_ground_plane': True,
-                    'ground_filter.angle': 0.3,
-                    'ground_filter.distance': 0.3,
-                    'ground_filter.plane_distance': 1.0,
-                    'sensor_model.max_range': 8.0,
-                    'point_cloud_max_z': 0.5,
-                    'point_cloud_min_z': -0.5,
-                    'use_sim_time': use_sim_time,
-                }],
-                remappings=[
-                    ('cloud_in', 'cloud_registered_body'),
-                    ('/projected_map', 'map'),
-                    ('/octomap_binary', 'octomap_binary'),
-                    ('/octomap_full', 'octomap_full'),
-                    ('/octomap_point_cloud_centers', 'octomap_point_cloud_centers'),
-                    ('/occupied_cells_vis_array', 'occupied_cells_vis_array'),
-                    ('/free_cells_vis_array', 'free_cells_vis_array'),
-                ],
-            )
-        ]
+    octomap_node = Node(
+        package='octomap_server',
+        executable='octomap_server_node',
+        name='octomap_server',
+        namespace=namespace,
+        output='screen',
+        parameters=[{
+            'frame_id': [world_namespace, '/camera_init'],
+            'resolution': 0.2,
+            'base_frame_id': [body_namespace, '/base_link'],
+            'filter_speckles': True,
+            'filter_ground_plane': True,
+            'ground_filter.angle': 0.3,
+            'ground_filter.distance': 0.3,
+            'ground_filter.plane_distance': 1.0,
+            'sensor_model.max_range': 8.0,
+            'point_cloud_max_z': 0.5,
+            'point_cloud_min_z': -0.5,
+            'use_sim_time': use_sim_time,
+        }],
+        remappings=[
+            ('cloud_in', 'cloud_registered_body'),
+            ('/projected_map', 'map'),
+            ('/octomap_binary', 'octomap_binary'),
+            ('/octomap_full', 'octomap_full'),
+            ('/octomap_point_cloud_centers', 'octomap_point_cloud_centers'),
+            ('/occupied_cells_vis_array', 'occupied_cells_vis_array'),
+            ('/free_cells_vis_array', 'free_cells_vis_array'),
+        ],
+    )
+
+    # Start octomap only after the pointcloud aggregator has exited.
+    octomap = RegisterEventHandler(
+        OnProcessExit(
+            target_action=aggregator_node,
+            on_exit=[octomap_node],
+        )
     )
 
     return LaunchDescription([
