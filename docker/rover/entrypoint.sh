@@ -11,7 +11,7 @@ colcon build --packages-select livox_ros_driver2 fast_lio calibrate_lidars mappi
 colcon build --symlink-install --packages-up-to multi_lidar_calibrator --cmake-args -DCMAKE_BUILD_TYPE=Release
 colcon build --base-paths src/navigation2 --packages-ignore nav2_system_tests
 
-fastdds discovery --server-id 0 --ip-address 192.168.0.200&
+fastdds discovery --server-id 0 -l 192.168.0.200&
 
 ros2 launch livox_ros_driver2 msg_MID360_rover_launch.py &
 ros2 launch mapping_launch system.launch.py rviz:=false start_drone:=false &
