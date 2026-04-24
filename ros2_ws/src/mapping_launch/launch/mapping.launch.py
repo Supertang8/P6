@@ -16,6 +16,7 @@ def generate_launch_description():
     body_namespace = LaunchConfiguration('body_namespace')
     namespace = LaunchConfiguration('namespace')
     rviz = LaunchConfiguration('rviz')
+    use_sim_time = LaunchConfiguration('use_sim_time')
 
     declare_world_namespace_cmd = DeclareLaunchArgument(
         'world_namespace', default_value='rover',
@@ -33,6 +34,10 @@ def generate_launch_description():
         'namespace', default_value='drone',
         description='ROS namespace used to isolate all mapper topics'
     )
+    declare_use_sim_time_cmd = DeclareLaunchArgument(
+        'use_sim_time', default_value='false',
+        description='Use simulation (Gazebo) clock if true'
+    )
 
     # Generates static tf for 'odom' -> 'camera_init', aligning to gravity.
     odom_2_camera_init = Node(
@@ -44,6 +49,7 @@ def generate_launch_description():
             '--frame-id', [namespace, '/camera_init'],
             '--child-frame-id', [namespace, '/odom'],
         ],
+        parameters=[{'use_sim_time': use_sim_time}],
     )
 
     # Generates tf for 'odom' -> 'base_link' based on Odometry from FAST-LIO.
@@ -57,6 +63,7 @@ def generate_launch_description():
             'frame_id': [namespace, '/odom'],
             'child_frame_id': [namespace, '/base_link'],
             'use_yaw_only': True,
+            'use_sim_time': use_sim_time,
         }],
     )
 
@@ -76,6 +83,7 @@ def generate_launch_description():
             {'downsample_leaf_size': 0.05},
             {'min_dist': 1.0},
             {'max_dist': 10.0},
+            {'use_sim_time': use_sim_time},
         ],
     )
 
@@ -85,6 +93,7 @@ def generate_launch_description():
             'config_file': 'mid360.yaml',
             'rviz': rviz,
             'namespace': namespace,
+            'use_sim_time': use_sim_time,
         }.items(),
     )
 
@@ -110,6 +119,7 @@ def generate_launch_description():
                     'sensor_model.max_range': 8.0,
                     'point_cloud_max_z': 0.5,
                     'point_cloud_min_z': -0.5,
+                    'use_sim_time': use_sim_time,
                 }],
                 remappings=[
                     ('cloud_in', 'cloud_registered_body'),
@@ -129,6 +139,7 @@ def generate_launch_description():
         declare_body_namespace_cmd,
         declare_rviz_cmd,
         declare_namespace_cmd,
+        declare_use_sim_time_cmd,
         odom_2_camera_init,
         odom_2_base_link,
         fastlio,

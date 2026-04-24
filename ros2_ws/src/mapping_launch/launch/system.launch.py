@@ -39,6 +39,7 @@ def generate_launch_description():
     rviz = LaunchConfiguration('rviz')
     start_rover = LaunchConfiguration('start_rover')
     start_drone = LaunchConfiguration('start_drone')
+    use_sim_time = LaunchConfiguration('use_sim_time')
 
     declare_rviz_cmd = DeclareLaunchArgument(
         'rviz',
@@ -58,6 +59,12 @@ def generate_launch_description():
         description='Set to true if runnung on rosbag'
     )
 
+    declare_use_sim_time_cmd = DeclareLaunchArgument(
+        'use_sim_time',
+        default_value='false',
+        description='Use simulation (Gazebo) clock if true'
+    )
+
     cloud_saver_node = Node(
         package='calibrate_lidars',
         executable='gather_aggregated_clouds',
@@ -71,6 +78,7 @@ def generate_launch_description():
             {'rover_output_path': os.path.join(calibration_files_dir, 'lidar_1.pcd')},
             {'drone_output_path': os.path.join(calibration_files_dir, 'lidar_2.pcd')},
             {'request_retry_timeout_sec': 10.0},
+            {'use_sim_time': use_sim_time},
         ],
     )
 
@@ -83,7 +91,8 @@ def generate_launch_description():
         executable="multi_lidar_calibrator",
         name="multi_lidar_calibration_node",
         parameters=[multi_lica_parameter_file,
-                    multi_lica_output_dir],
+                    multi_lica_output_dir,
+                    {'use_sim_time': use_sim_time}],
         output="screen",
     )
 
@@ -95,6 +104,7 @@ def generate_launch_description():
             'world_namespace': 'rover',
             'namespace': 'drone',
             'rviz': 'false',
+            'use_sim_time': use_sim_time,
         }.items(),
         condition=IfCondition(start_drone),
     )
@@ -111,6 +121,7 @@ def generate_launch_description():
                     'world_namespace': 'rover',
                     'namespace': 'rover',
                     'rviz': 'false',
+                    'use_sim_time': use_sim_time,
                 }.items(),
             )
         ],
@@ -130,6 +141,7 @@ def generate_launch_description():
             'parent_body_to_lidar_xyzw': '0.0,0.0,0.0,1.0', # mid360 imu to lidar rot
             'child_body_to_lidar_xyz': '-0.011,-0.02329,0.04412', # mid360 imu to lidar pos
             'child_body_to_lidar_xyzw': '0.0,0.0,0.0,1.0', # mid360 imu to lidar rot
+            'use_sim_time': use_sim_time,
         }],
         output='screen',
     )
@@ -138,7 +150,7 @@ def generate_launch_description():
         package='merge_map',
         executable='merge_map',
         output='screen',
-        parameters=[{'use_sim_time': False}],
+        parameters=[{'use_sim_time': use_sim_time}],
         remappings=[
             ('/map1', '/rover/projected_map'),
             ('/map2', '/drone/projected_map'),
@@ -151,6 +163,7 @@ def generate_launch_description():
         name='rviz2',
         arguments=['-d', rviz_cfg],
         output='screen',
+        parameters=[{'use_sim_time': use_sim_time}],
         condition=IfCondition(rviz),
     )
 
@@ -158,11 +171,15 @@ def generate_launch_description():
             package='livox_converter',
             executable='map_expander',
             name='map_expander',
+            parameters=[{'use_sim_time': use_sim_time}],
         )
 
     nav2_node = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(nav2_launch),
-        launch_arguments={'params_file': nav2_params}.items(),
+        launch_arguments={
+            'params_file': nav2_params,
+            'use_sim_time': use_sim_time,
+        }.items(),
     )
 
     static_base_link_frame = Node(
@@ -173,6 +190,7 @@ def generate_launch_description():
             '--frame-id', ['rover/body'],
             '--child-frame-id', ['base_footprint'],
         ],
+        parameters=[{'use_sim_time': use_sim_time}],
     )
 
     static_map_frame = Node(
@@ -183,6 +201,7 @@ def generate_launch_description():
             '--frame-id', ['map'],
             '--child-frame-id', ['rover/camera_init'],
         ],
+        parameters=[{'use_sim_time': use_sim_time}],
     )
 
     static_odom_frame = Node(
@@ -193,12 +212,14 @@ def generate_launch_description():
             '--frame-id', ['rover/camera_init'],
             '--child-frame-id', ['odom'],
         ],
+        parameters=[{'use_sim_time': use_sim_time}],
     )
 
     return LaunchDescription([
         declare_rviz_cmd,
         declare_start_rover_cmd,
         declare_start_drone_cmd,
+        declare_use_sim_time_cmd,
         rviz_node,
         static_base_link_frame,
         static_map_frame,
