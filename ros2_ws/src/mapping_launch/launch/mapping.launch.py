@@ -119,7 +119,7 @@ def generate_launch_description():
             'use_sim_time': use_sim_time,
         }],
         remappings=[
-            ('cloud_in', 'cloud_registered_body'),
+            ('cloud_in', 'cloud_registered'),
             ('/projected_map', 'map'),
             ('/octomap_binary', 'octomap_binary'),
             ('/octomap_full', 'octomap_full'),
