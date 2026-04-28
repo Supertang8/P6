@@ -270,11 +270,20 @@ void ImuProcess::UndistortPcl(const MeasureGroup &meas, esekfom::esekf<state_ikf
     if(head_stamp < last_lidar_end_time_)
     {
       dt = tail_stamp - last_lidar_end_time_;
-      // dt = tail->header.stamp.toSec() - pcl_beg_time;
     }
     else
     {
       dt = tail_stamp - head_stamp;
+    }
+
+    // Skip integration steps caused by IMU dropout (>5x normal interval).
+    // A large dt means packets were lost; integrating over the gap produces a
+    // wildly wrong predicted pose that prevents ICP from finding correspondences.
+    if (dt > 0.05)
+    {
+      angvel_last = angvel_avr;
+      acc_s_last  = acc_avr;
+      continue;
     }
     
     in.acc = acc_avr;
