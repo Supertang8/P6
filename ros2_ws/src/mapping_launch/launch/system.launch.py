@@ -225,8 +225,8 @@ def generate_launch_description():
         static_map_frame,
         static_odom_frame,
         cloud_saver_node,
-        rover_mapping,
         drone_mapping,
+        rover_mapping,
         merge_map_node,
         map_expander,
         RegisterEventHandler(

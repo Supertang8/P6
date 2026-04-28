@@ -29,7 +29,6 @@ setup(
         'console_scripts': [
             'tf_namespace_republisher = mapping_launch.tf_namespace_republisher:main',
             'camera_init_tf_from_raw_lidar = mapping_launch.camera_init_tf_from_raw_lidar:main',
-            'cloud_world_aligned_republisher = mapping_launch.cloud_world_aligned_republisher:main',
         ],
     },
 )
