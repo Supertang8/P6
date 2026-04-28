@@ -3,7 +3,7 @@ import os.path
 from ament_index_python.packages import get_package_share_directory
 
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, RegisterEventHandler
+from launch.actions import DeclareLaunchArgument, OpaqueFunction, RegisterEventHandler
 from launch.actions import IncludeLaunchDescription
 from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
@@ -68,6 +68,25 @@ def generate_launch_description():
         }],
     )
 
+    # Republish FAST-LIO's cloud_registered (world frame) into a body-positioned,
+    # world-aligned frame so octomap_server gets a correct sensor_origin while
+    # avoiding body attitude in the body->base_link round-trip used by the
+    # ground filter.
+    cloud_world_aligned_republisher = Node(
+        package='mapping_launch',
+        executable='cloud_world_aligned_republisher',
+        name='cloud_world_aligned_republisher',
+        namespace=namespace,
+        output='screen',
+        parameters=[{
+            'odom_topic': 'Odometry',
+            'cloud_topic': 'cloud_registered',
+            'output_cloud_topic': 'cloud_registered_world_aligned',
+            'output_frame': 'sensor_world_aligned',
+            'use_sim_time': use_sim_time,
+        }],
+    )
+
     # Pointcloud aggregator node
     aggregator_node = Node(
         package='calibrate_lidars',
@@ -98,44 +117,57 @@ def generate_launch_description():
         }.items(),
     )
 
-    octomap_node = Node(
-        package='octomap_server',
-        executable='octomap_server_node',
-        name='octomap_server',
-        namespace=namespace,
-        output='screen',
-        parameters=[{
-            'frame_id': [world_namespace, '/camera_init'],
-            'resolution': 0.2,
-            'base_frame_id': [body_namespace, '/base_link'],
-            'filter_speckles': True,
-            'filter_ground_plane': True,
-            'ground_filter.angle': 0.3,
-            'ground_filter.distance': 0.3,
-            'ground_filter.plane_distance': 1.0,
-            'sensor_model.max_range': 8.0,
-            'point_cloud_max_z': 0.5,
-            'point_cloud_min_z': -0.5,
-            'use_sim_time': use_sim_time,
-        }],
-        remappings=[
-            ('cloud_in', 'cloud_registered'),
-            ('/projected_map', 'map'),
-            ('/octomap_binary', 'octomap_binary'),
-            ('/octomap_full', 'octomap_full'),
-            ('/octomap_point_cloud_centers', 'octomap_point_cloud_centers'),
-            ('/occupied_cells_vis_array', 'occupied_cells_vis_array'),
-            ('/free_cells_vis_array', 'free_cells_vis_array'),
-        ],
-    )
+    # Build octomap inside an OpaqueFunction so the namespace substitutions are
+    # resolved while the IncludeLaunchDescription scope is still active. If we
+    # built it eagerly with LaunchConfigurations, the OnProcessExit handler
+    # would fire after the include scope has been popped and the substitutions
+    # would resolve against the wrong (or last-set) values.
+    def _register_octomap(context, *args, **kwargs):
+        ns = LaunchConfiguration('namespace').perform(context)
+        world_ns = LaunchConfiguration('world_namespace').perform(context)
+        body_ns = LaunchConfiguration('body_namespace').perform(context)
+        use_sim = LaunchConfiguration('use_sim_time').perform(context).lower() == 'true'
 
-    # Start octomap only after the pointcloud aggregator has exited.
-    octomap = RegisterEventHandler(
-        OnProcessExit(
-            target_action=aggregator_node,
-            on_exit=[octomap_node],
+        octomap_node = Node(
+            package='octomap_server',
+            executable='octomap_server_node',
+            name='octomap_server',
+            namespace=ns,
+            output='screen',
+            parameters=[{
+                'frame_id': f'{world_ns}/camera_init',
+                'resolution': 0.2,
+                'base_frame_id': f'{body_ns}/base_link',
+                'filter_speckles': True,
+                'filter_ground_plane': True,
+                'ground_filter.angle': 0.3,
+                'ground_filter.distance': 0.3,
+                'ground_filter.plane_distance': 1.0,
+                'sensor_model.max_range': 8.0,
+                'point_cloud_max_z': 0.5,
+                'point_cloud_min_z': -0.5,
+                'use_sim_time': use_sim,
+            }],
+            remappings=[
+                ('cloud_in', 'cloud_registered_world_aligned'),
+                ('/projected_map', 'map'),
+                ('/octomap_binary', 'octomap_binary'),
+                ('/octomap_full', 'octomap_full'),
+                ('/octomap_point_cloud_centers', 'octomap_point_cloud_centers'),
+                ('/occupied_cells_vis_array', 'occupied_cells_vis_array'),
+                ('/free_cells_vis_array', 'free_cells_vis_array'),
+            ],
         )
-    )
+        return [
+            RegisterEventHandler(
+                OnProcessExit(
+                    target_action=aggregator_node,
+                    on_exit=[octomap_node],
+                )
+            )
+        ]
+
+    octomap = OpaqueFunction(function=_register_octomap)
 
     return LaunchDescription([
         declare_world_namespace_cmd,
@@ -146,6 +178,7 @@ def generate_launch_description():
         odom_2_camera_init,
         odom_2_base_link,
         fastlio,
+        cloud_world_aligned_republisher,
         octomap,
         aggregator_node,
     ])

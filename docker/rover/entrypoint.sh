@@ -10,8 +10,14 @@ source /root/ros2_ws/install/setup.bash
 #colcon build --base-paths src/navigation2 --packages-ignore nav2_system_tests
 
 ros2 launch livox_ros_driver2 msg_MID360_rover_launch.py &
+sleep 2
+
 ros2 launch mapping_launch system.launch.py rviz:=false start_drone:=false &
+sleep 2
+
 ros2 launch nav2_bringup navigation_launch.py use_sim_time:=false params_file:="/root/ros2_ws/src/navigation2/nav2_bringup/params/nav2_params.yaml" &
+sleep 2
+
 ros2 run drone_controller first_point_in_path
 
 # Keep the container running
