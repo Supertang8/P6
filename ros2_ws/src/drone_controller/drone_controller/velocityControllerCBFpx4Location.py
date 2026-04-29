@@ -3,6 +3,7 @@
 
 import rclpy
 from geometry_msgs.msg import PoseStamped, Twist, TwistStamped
+from px4_msgs.msg import VehicleLocalPosition
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 
@@ -46,8 +47,6 @@ class VelocityController(Node):
 
         # --- TF2 setup ---
         # Change these frame names to match your TF tree
-        self.parent_frame_drone = "drone/camera_init"        # e.g. "world", "odom"
-        self.child_frame_drone  = "drone/body"  # e.g. "drone", "body"
         self.parent_frame_rover = "rover/camera_init"  # e.g. "world", "odom"
         self.child_frame_rover = "rover/body"  # e.g. "rover", "base_link"
         self.tf_buffer = tf2_ros.Buffer() 
@@ -62,6 +61,11 @@ class VelocityController(Node):
         # Subscriber for desired position setpoints
         self.setpoint_sub = self.create_subscription(
             PoseStamped, "/offboard/setpoint", self.setpoint_callback, qos
+        )
+
+        # Subscriber for current position (from PX4)
+        self.pose_sub = self.create_subscription(
+            VehicleLocalPosition, "/fmu/out/vehicle_local_position_v1", self.pose_callback, qos
         )
 
         # Subscriber for rover velocity
@@ -87,23 +91,8 @@ class VelocityController(Node):
     def rover_vel_callback(self, msg: Twist):
         self.rover_vel = [msg.linear.x, msg.linear.y, msg.linear.z]
 
-    def _update_drone_position_from_tf(self) -> bool:
-        """Look up the latest drone transform and update self.current_pos.
-        Returns True on success, False if the transform is not yet available."""
-        try:
-            # rclpy.time.Time() means "latest available transform"
-            tf = self.tf_buffer.lookup_transform(
-                self.parent_frame_drone,
-                self.child_frame_drone,
-                rclpy.time.Time(),
-            )
-            t = tf.transform.translation
-            self.current_pos = [t.x, t.y, t.z]
-            self.get_logger().info(f"Current drone position from TF: x={t.x:.2f}, y={t.y:.2f}, z={t.z:.2f}")
-            return True
-        except TransformException as e:
-            self.get_logger().warn(f"Could not get TF drone transform: {e}", throttle_duration_sec=2.0)
-            return False
+    def pose_callback(self, msg: VehicleLocalPosition):
+        self.current_pos = [msg.x, msg.y, msg.z]
         
     def _update_rover_position_from_tf(self) -> bool:
         """Look up the latest rover transform and update self.rover_pos.
@@ -159,9 +148,6 @@ class VelocityController(Node):
 
     def control_loop(self):
         # Refresh position from TF every tick
-        if not self._update_drone_position_from_tf():
-            return
-        
         if not self._update_rover_position_from_tf():
             self.get_logger().warn("No TF position update from rover.", throttle_duration_sec=2.0)
 
