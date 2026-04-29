@@ -189,8 +189,6 @@ void ImuProcess::IMU_init(const MeasureGroup &meas, esekfom::esekf<state_ikfom, 
 
     N ++;
   }
-
-
   /* modified by SanghyunPark - Start */
   Eigen::Quaterniond rotation = Eigen::Quaterniond::FromTwoVectors(mean_acc, Eigen::Vector3d::UnitZ());
   mean_acc = rotation * mean_acc;
@@ -199,7 +197,7 @@ void ImuProcess::IMU_init(const MeasureGroup &meas, esekfom::esekf<state_ikfom, 
   init_state.rot = rotation;
   init_state.grav = S2(-mean_acc / mean_acc.norm() * G_m_s2);
   /* modified by SanghyunPark - End */
-  
+
   //state_inout.rot = Eye3d; // Exp(mean_acc.cross(V3D(0, 0, -1 / scale_gravity)));
   init_state.bg  = mean_gyr;
   init_state.offset_T_L_I = Lidar_T_wrt_IMU;
@@ -270,20 +268,11 @@ void ImuProcess::UndistortPcl(const MeasureGroup &meas, esekfom::esekf<state_ikf
     if(head_stamp < last_lidar_end_time_)
     {
       dt = tail_stamp - last_lidar_end_time_;
+      // dt = tail->header.stamp.toSec() - pcl_beg_time;
     }
     else
     {
       dt = tail_stamp - head_stamp;
-    }
-
-    // Skip integration steps caused by IMU dropout (>5x normal interval).
-    // A large dt means packets were lost; integrating over the gap produces a
-    // wildly wrong predicted pose that prevents ICP from finding correspondences.
-    if (dt > 0.05)
-    {
-      angvel_last = angvel_avr;
-      acc_s_last  = acc_avr;
-      continue;
     }
     
     in.acc = acc_avr;
