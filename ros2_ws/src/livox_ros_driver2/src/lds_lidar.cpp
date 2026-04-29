@@ -78,10 +78,8 @@ void LdsLidar::ResetLdsLidar(void) { ResetLds(kSourceRawLidar); }
 
 bool LdsLidar::InitLdsLidar(const std::string& path_name) {
   if (is_initialized_) {
-    printf("Lds is already inited! Reinitializing...\n");
-    // Force reinitialization - clear the flag and reset state
-    is_initialized_ = false;
-    ResetLdsLidar();
+    printf("Lds is already inited!\n");
+    return false;
   }
 
   if (g_lds_ldiar == nullptr) {
@@ -208,8 +206,6 @@ int LdsLidar::DeInitLdsLidar(void) {
     printf("Livox Lidar SDK Deinit completely!\n");
   }
 
-  is_initialized_ = false;
-  printf("LiDAR deinitialized and ready for restart!\n");
   return 0;
 }
 
