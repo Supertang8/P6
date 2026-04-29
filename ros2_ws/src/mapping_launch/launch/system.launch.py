@@ -182,12 +182,23 @@ def generate_launch_description():
         }.items(),
     )
 
-    static_base_link_frame = Node(
+    static_lidar_frame = Node(
         package='tf2_ros',
         executable='static_transform_publisher',
         arguments=[
             '--x', '0', '--y', '0', '--z', '0', '--qx', '0.0', '--qy', '0.0', '--qz', '0.0', '--qw', '1.0',
             '--frame-id', ['rover/body'],
+            '--child-frame-id', ['livox'],
+        ],
+        parameters=[{'use_sim_time': use_sim_time}],
+    )
+
+    static_base_link_frame = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        arguments=[
+            '--x', '-0.1', '--y', '0', '--z', '-0.26', '--qx', '0.0', '--qy', '0.0', '--qz', '0.0', '--qw', '1.0',
+            '--frame-id', ['livox'],
             '--child-frame-id', ['base_footprint'],
         ],
         parameters=[{'use_sim_time': use_sim_time}],
@@ -221,6 +232,7 @@ def generate_launch_description():
         declare_start_drone_cmd,
         declare_use_sim_time_cmd,
         rviz_node,
+        static_lidar_frame,
         static_base_link_frame,
         static_map_frame,
         static_odom_frame,
