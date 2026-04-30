@@ -36,7 +36,7 @@ def generate_launch_description():
             output='screen',
         ),
         TimerAction(
-            period=2.0,
+            period=15.0,
             actions=[
                 Node(
                     package='drone_controller',
