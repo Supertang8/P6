@@ -10,16 +10,6 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
-    livox_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(
-                get_package_share_directory('livox_ros_driver2'),
-                'launch',
-                'msg_MID360_drone_launch.py',
-            )
-        )
-    )
-
     mapping_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(
@@ -52,6 +42,18 @@ def generate_launch_description():
                 ),
             ],
         ),
-        TimerAction(period=15.0, actions=[livox_launch]),
+        TimerAction(
+            period=15.0,
+            actions=[
+                ExecuteProcess(
+                    cmd=[
+                        'bash', '-c',
+                        'source /root/ros2_ws/install/setup.bash && ros2 launch livox_ros_driver2 msg_MID360_drone_launch.py'
+                    ],
+                    shell=False,
+                    output='screen',
+                ),
+            ]
+        ),
         TimerAction(period=20.0, actions=[mapping_launch]),
     ])
