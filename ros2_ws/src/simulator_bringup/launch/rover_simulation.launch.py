@@ -42,7 +42,18 @@ def generate_launch_description():
         Node(
             package='tf2_ros',
             executable='static_transform_publisher',
+<<<<<<< HEAD
             name='livox_to_base_footprint',
+=======
+            name='body_to_base_link',
+            arguments=['0','0','0','0','0','0','body','livox']
+        ),
+
+        Node(
+            package='tf2_ros',
+            executable='static_transform_publisher',
+            name='body_to_base_link',
+>>>>>>> Kalman_tmp
             arguments=['-0.1','0','-0.26','0','0','0','livox','base_footprint']
         ),
 

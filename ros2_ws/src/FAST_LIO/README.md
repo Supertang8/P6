@@ -117,21 +117,6 @@ ros2 launch fast_lio mapping.launch.py config_file:=avia.yaml
 
 Change `config_file` parameter to other yaml file under config directory as you need.
 
-For MID360 with one shared config, keep LiDAR/IMU topics in `mid360.yaml` instead of duplicating yaml files:
-
-```bash
-ros2 launch fast_lio mapping.launch.py config_file:=mid360.yaml
-```
-
-You can also isolate all FAST-LIO topics with a ROS namespace:
-
-```bash
-ros2 launch fast_lio mapping.launch.py config_file:=mid360.yaml namespace:=robot1
-```
-
-Example: `livox/lidar` resolves to `/robot1/livox/lidar`, and `Odometry` resolves to `/robot1/Odometry`.
-RViz subscriptions in `mapping.launch.py` follow the same namespace.
-
 Launch livox ros driver. Use MID360 as an example.
 
 ```bash
