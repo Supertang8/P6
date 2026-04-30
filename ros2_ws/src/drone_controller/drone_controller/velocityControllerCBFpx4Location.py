@@ -197,8 +197,8 @@ class VelocityController(Node):
         ux, uy, uz = self.apply_cbf(ux, uy, uz)
 
         # Velocity limits
-        max_vel_xy = 5.0  # m/s
-        max_vel_z = 1.0   # m/s
+        max_vel_xy = 0.5  # m/s
+        max_vel_z = 0.5   # m/s
         ux = max(min(ux, max_vel_xy), -max_vel_xy)
         uy = max(min(uy, max_vel_xy), -max_vel_xy)
         uz = max(min(uz, max_vel_z), -max_vel_z)
