@@ -20,9 +20,9 @@ from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 SETPOINTS = [
     # (north, east, down,  yaw_deg)
     (  0.0,  0.0, -5.0,  0.0),
-    (  8.0, 0, -5.0,  0.0),
+    (  8.0, 0.0, -5.0,  0.0),
     (  0.0, 0.0, -5.0,  0.0),
-    (  8.0, 0, -5.0,  0.0),
+    (  8.0, 0.0, -5.0,  0.0),
 
     #Z hover test
     # (0.0, 0.0, -3.0, 0.0),
