@@ -20,8 +20,17 @@ def generate_launch_description():
     nav2_launch = os.path.join(nav2_pkg, 'launch', 'navigation_launch.py')
     nav2_params = os.path.expanduser('~/ros2_ws/src/navigation2/nav2_bringup/params/nav2_params.yaml')
 
+    ekf_params = os.path.expanduser('~/ros2_ws/src/ekf_config/ekf.yaml')
+
     return LaunchDescription([
 
+
+        Node(
+            package='tf2_ros',
+            executable='static_transform_publisher',
+            name='map_to_odom',
+            arguments=['0','0','0','0','0','0','map','odom']
+        ),
 
         Node(
             package='tf2_ros',
@@ -33,15 +42,15 @@ def generate_launch_description():
         Node(
             package='tf2_ros',
             executable='static_transform_publisher',
-            name='body_to_base_link',
-            arguments=['0','0','0','0','0','0','body','base_footprint']
+            name='livox_to_base_footprint',
+            arguments=['-0.1','0','-0.26','0','0','0','livox','base_footprint']
         ),
 
         Node(
             package='tf2_ros',
             executable='static_transform_publisher',
-            name='camera_init_to_odom',
-            arguments=['0','0','0','0','0','0','camera_init','odom']
+            name='body_to_livox',
+            arguments=['-0.1','0','-0.26','0','0','0','body','livox']
         ),
 
         Node(

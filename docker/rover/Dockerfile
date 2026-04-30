@@ -30,6 +30,7 @@ RUN apt update && \
         ros-humble-teleop-twist-keyboard \
         ros-humble-bondcpp \
         ros-humble-test-msgs \
+        ros-humble-robot-localization \
     && rm -rf /var/lib/apt/lists/*
 
 
