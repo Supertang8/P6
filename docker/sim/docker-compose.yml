@@ -2,7 +2,7 @@ services:
   sim:
     build: 
       context: ../..
-      dockerfile: ./docker/rover/Dockerfile
+      dockerfile: ./docker/sim/Dockerfile
     network_mode: host
     privileged: true
     environment:
