@@ -32,6 +32,7 @@ setup(
         'first_point_in_path = drone_controller.first_point_in_path:main',
         'velocityControllerCBF = drone_controller.velocityControllerCBF:main',
         'velocityControllerCBFSim = drone_controller.velocityControllerCBFSim:main',
+        'velocityControllerCBFpx4Location = drone_controller.velocityControllerCBFpx4Location:main',
         ],
     },
 )

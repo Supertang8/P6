@@ -40,7 +40,7 @@ def generate_launch_description():
             actions=[
                 Node(
                     package='drone_controller',
-                    executable='velocityControllerCBF',
+                    executable='velocityControllerCBFpx4Location',
                     name='velocity_controller_cbf',
                     output='screen',
                 ),
