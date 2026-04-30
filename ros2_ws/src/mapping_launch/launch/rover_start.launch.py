@@ -7,9 +7,8 @@ from ament_index_python.packages import get_package_share_directory
 import os
 
 def generate_launch_description():
-    # Path to leo_gz_bringup launch file
-    livox_pkg = get_package_share_directory('livox_ros_driver2')
-    livox_launch = os.path.join(livox_pkg, 'launch', 'msg_MID360_rover_launch.py')
+    livox_driver_pkg = get_package_share_directory('livox_ros_driver2')
+    livox_driver_launch = os.path.join(livox_driver_pkg, 'launch', 'msg_MID360_rover_launch.py')
 
     # Path to fast_lio launch file
     fast_lio_pkg = get_package_share_directory('fast_lio')
@@ -20,37 +19,16 @@ def generate_launch_description():
     nav2_launch = os.path.join(nav2_pkg, 'launch', 'navigation_launch.py')
     nav2_params = os.path.expanduser('~/ros2_ws/src/navigation2/nav2_bringup/params/nav2_params.yaml')
 
+    ekf_params = os.path.expanduser('~/ros2_ws/src/ekf_config/ekf.yaml')
 
     return LaunchDescription([
-        # Launch leo_gz
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(livox_launch),
-        ),
 
-        # Launch fast_lio with config_file argument
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(fast_lio_launch),
-            launch_arguments={'config_file': fast_lio_config, 'rviz': 'false'}.items()
-        ),
 
-        # Launch octomap_server_node with parameters
         Node(
-            package='octomap_server',
-            executable='octomap_server_node',
-            name='octomap_server',
-            output='screen',
-            parameters=[{
-                'frame_id': 'camera_init',
-                'resolution': 0.1,
-                'base_frame_id': 'body',
-                'filter_speckles': True,
-                'filter_ground_plane': True,
-                'ground_filter.angle': 0.1,
-                'ground_filter.distance': 0.3,
-                'ground_filter.plane_distance': 0.8,
-                'sensor_model.max_range': 8.0
-            }],
-            remappings=[('cloud_in', '/cloud_registered_body'), ('projected_map', '/map')]
+            package='tf2_ros',
+            executable='static_transform_publisher',
+            name='map_to_odom',
+            arguments=['0','0','0','0','0','0','map','odom']
         ),
 
         Node(
@@ -63,24 +41,83 @@ def generate_launch_description():
         Node(
             package='tf2_ros',
             executable='static_transform_publisher',
-            name='body_to_base_link',
-            arguments=['0','0','0','0','0','0','body','base_footprint']
+            name='livox_to_base_footprint',
+            arguments=['-0.1','0','-0.26','0','0','0','livox','base_footprint']
         ),
 
         Node(
             package='tf2_ros',
             executable='static_transform_publisher',
-            name='camera_init_to_odom',
-            arguments=['0','0','0','0','0','0','camera_init','odom']
+            name='body_to_livox',
+            arguments=['0','0','0','0','0','0','body','livox']
         ),
 
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(nav2_launch),  
-            launch_arguments={
-                'params_file': nav2_params,
-                'use_sim_time': 'false'
-            }.items()   
+        Node(
+            package='livox_converter',
+            executable='map_expander',
+            name='map_expander',
         ),
+
+        # Launch leo_gz
+        TimerAction(
+            period=2.0,
+                actions=[
+                    IncludeLaunchDescription(
+                        PythonLaunchDescriptionSource(livox_driver_launch),
+                    ),
+                ]
+        ),
+
+        # Launch fast_lio with config_file argument
+        TimerAction(
+            period=7.0,
+                actions=[
+                    IncludeLaunchDescription(
+                        PythonLaunchDescriptionSource(fast_lio_launch),
+                        launch_arguments={'config_file': fast_lio_config}.items()
+                    ),
+                ]
+        ),
+
+        # Launch octomap_server_node with parameters
+        TimerAction(
+            period=7.0,
+                actions=[
+                    Node(
+                        package='octomap_server',
+                        executable='octomap_server_node',
+                        name='octomap_server',
+                        output='screen',
+                        parameters=[{
+                            'frame_id': 'camera_init',
+                            'resolution': 0.1,
+                            'base_frame_id': 'body',
+                            'filter_speckles': True,
+                            'filter_ground_plane': True,
+                            'ground_filter.angle': 0.1,
+                            'ground_filter.distance': 0.3,
+                            'ground_filter.plane_distance': 0.8,
+                            'sensor_model.max_range': 8.0
+                        }],
+                        remappings=[('cloud_in', '/cloud_registered_body'), ('projected_map', '/merge_map')]
+                    ),
+                ]
+        ),
+
+        TimerAction(
+            period=10.0,
+                actions=[
+
+                    IncludeLaunchDescription(
+                        PythonLaunchDescriptionSource(nav2_launch),
+                        launch_arguments={
+                            'params_file': nav2_params,
+                            'use_sim_time': 'false'
+                        }.items(),   
+                    ),    
+                ]
+        ),
+
     ])
 """     
         IncludeLaunchDescription(
