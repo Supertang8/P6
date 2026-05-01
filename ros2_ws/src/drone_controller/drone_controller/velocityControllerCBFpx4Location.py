@@ -143,7 +143,7 @@ class VelocityController(Node):
         uy_safe = uy + lambda_val * h_grad[1]
         uz_safe = uz + lambda_val * h_grad[2]
 
-        return ux_safe, uy_safe, uz_safe
+        return float(ux_safe), float(uy_safe), float(uz_safe)
        
 
     def control_loop(self):
