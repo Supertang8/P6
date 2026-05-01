@@ -128,7 +128,7 @@ class VelocityController(Node):
 
         ### First we check if the current control input satisfies the CBF constraint
         if h_dot + self.alpha * h >= 0:
-            return ux, uy, uz  # No modification needed
+            return float(ux), float(uy), float(uz)  # No modification needed
         ### If not, we project the control input onto the boundary of the safe set
         h_grad = [-2*dx, -2*dy, -2*dz]
         h_grad_norm = h_grad[0]**2 + h_grad[1]**2 + h_grad[2]**2
