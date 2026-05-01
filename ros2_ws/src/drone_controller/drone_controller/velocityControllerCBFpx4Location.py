@@ -47,8 +47,10 @@ class VelocityController(Node):
 
         # --- TF2 setup ---
         # Change these frame names to match your TF tree
-        self.parent_frame_rover = "rover/camera_init"  # e.g. "world", "odom"
-        self.child_frame_rover = "rover/body"  # e.g. "rover", "base_link"
+        self.parent_frame_rover = "camera_init"     
+        self.child_frame_rover  = "body"  
+        #self.parent_frame_rover = "rover/camera_init"  # e.g. "world", "odom"
+        #self.child_frame_rover = "rover/body"  # e.g. "rover", "base_link"
         self.tf_buffer = tf2_ros.Buffer() 
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
 
