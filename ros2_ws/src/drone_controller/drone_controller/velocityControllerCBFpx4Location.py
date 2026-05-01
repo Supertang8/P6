@@ -148,7 +148,9 @@ class VelocityController(Node):
 
     def control_loop(self):
         # Refresh position from TF every tick
-        self._update_rover_position_from_tf()
+        if not self._update_rover_position_from_tf():
+            self.get_logger().warn("No TF position update from rover.", throttle_duration_sec=2.0)
+
             
 
         if self.desired_pose is None or self.current_pos is None:
