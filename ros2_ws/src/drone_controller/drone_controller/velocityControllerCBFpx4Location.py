@@ -208,10 +208,15 @@ class VelocityController(Node):
         ux = max(min(ux, max_vel_xy), -max_vel_xy)
         uy = max(min(uy, max_vel_xy), -max_vel_xy)
         uz = max(min(uz, max_vel_z), -max_vel_z)
-        
 
-        # Create velocity message
-        self.get_logger().info(f"uy={uy} type={type(uy)}")
+        # Make sure ROS fields get plain Python floats
+        ux = float(ux)
+        uy = float(uy)
+        uz = float(uz)
+
+        self.get_logger().info(
+            f"ux={ux} type={type(ux)}, uy={uy} type={type(uy)}, uz={uz} type={type(uz)}"
+        )
         twist_msg = TwistStamped()
         twist_msg.header.stamp = self.get_clock().now().to_msg()
         twist_msg.header.frame_id = "map"
