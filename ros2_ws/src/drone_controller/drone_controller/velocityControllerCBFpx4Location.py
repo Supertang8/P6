@@ -214,9 +214,6 @@ class VelocityController(Node):
         uy = float(uy)
         uz = float(uz)
 
-        self.get_logger().info(
-            f"ux={ux} type={type(ux)}, uy={uy} type={type(uy)}, uz={uz} type={type(uz)}"
-        )
         twist_msg = TwistStamped()
         twist_msg.header.stamp = self.get_clock().now().to_msg()
         twist_msg.header.frame_id = "map"
