@@ -89,10 +89,10 @@ class VelocityController(Node):
         )
     
     def rover_vel_callback(self, msg: Twist):
-        self.rover_vel = [msg.linear.x, msg.linear.y, msg.linear.z]
+        self.rover_vel = [float(msg.linear.x), float(msg.linear.y), float(msg.linear.z)]
 
     def pose_callback(self, msg: VehicleLocalPosition):
-        self.current_pos = [msg.x, msg.y, msg.z]
+        self.current_pos = [float(msg.x), float(msg.y), float(msg.z)]
         
     def _update_rover_position_from_tf(self) -> bool:
         """Look up the latest rover transform and update self.rover_pos.
