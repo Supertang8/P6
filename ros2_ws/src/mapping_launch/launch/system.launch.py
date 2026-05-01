@@ -101,10 +101,12 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(mapping_launch_path),
         launch_arguments={
             'body_namespace': 'drone',
-            'world_namespace': 'rover',
+            'world_namespace': 'drone',
             'namespace': 'drone',
             'rviz': 'false',
             'use_sim_time': use_sim_time,
+            'octomap_resolution': '0.4', # Lower res
+            'octomap_model_range': '12.0', # Higher range
         }.items(),
         condition=IfCondition(start_drone),
     )
@@ -122,6 +124,8 @@ def generate_launch_description():
                     'namespace': 'rover',
                     'rviz': 'false',
                     'use_sim_time': use_sim_time,
+                    'octomap_resolution': '0.2', # Higher res
+                    'octomap_model_range': '8.0', # Lower range
                 }.items(),
             )
         ],
@@ -236,22 +240,8 @@ def generate_launch_description():
         static_base_link_frame,
         static_map_frame,
         static_odom_frame,
-        cloud_saver_node,
         rover_mapping,
         drone_mapping,
         merge_map_node,
         map_expander,
-        RegisterEventHandler(
-            event_handler=OnProcessExit(
-                target_action=cloud_saver_node,
-                on_exit=[multi_lica],
-            )
-        ),
-        RegisterEventHandler(
-            event_handler=OnProcessExit(
-                target_action=multi_lica,
-                on_exit=[camera_init_from_raw_lidar],
-            )
-        ),
-
     ])
