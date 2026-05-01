@@ -107,7 +107,7 @@ class VelocityController(Node):
             )
             t = tf.transform.translation
             self.rover_pos = [t.x, t.y, t.z]
-            self.get_logger().info(f"Current rover position from TF: x={t.x:.2f}, y={t.y:.2f}, z={t.z:.2f}")
+            self.get_logger().info(f"Current rover position from TF: x={t.x:.2f}, y={t.y:.2f}, z={t.z:.2f}", throttle_duration_sec=3.0)
             return True
         except TransformException as e:
             self.get_logger().warn(f"Could not get TF rover transform: {e}", throttle_duration_sec=2.0)
@@ -193,8 +193,12 @@ class VelocityController(Node):
         uy = py + iy + dy
         uz = pz + iz + dz
 
+        #log control signal before CBF
+        self.get_logger().info(f"Control signal before CBF: ux={ux:.2f}, uy={uy:.2f}, uz={uz:.2f}", throttle_duration_sec=1.0)
+
         # Apply CBF
         ux, uy, uz = self.apply_cbf(ux, uy, uz)
+        self.get_logger().info(f"Control signal after CBF: ux={ux:.2f}, uy={uy:.2f}, uz={uz:.2f}", throttle_duration_sec=1.0)
 
         # Velocity limits
         max_vel_xy = 2  # m/s
@@ -202,7 +206,7 @@ class VelocityController(Node):
         ux = max(min(ux, max_vel_xy), -max_vel_xy)
         uy = max(min(uy, max_vel_xy), -max_vel_xy)
         uz = max(min(uz, max_vel_z), -max_vel_z)
-      
+        
 
         # Create velocity message
         twist_msg = TwistStamped()
