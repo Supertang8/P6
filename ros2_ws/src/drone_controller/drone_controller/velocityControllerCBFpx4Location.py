@@ -196,11 +196,11 @@ class VelocityController(Node):
         uz = pz + iz + dz
 
         #log control signal before CBF
-        #self.get_logger().info(f"Control signal before CBF: ux={ux:.2f}, uy={uy:.2f}, uz={uz:.2f}", throttle_duration_sec=1.0)
+        self.get_logger().info(f"Control signal before CBF: ux={ux:.2f}, uy={uy:.2f}, uz={uz:.2f}", throttle_duration_sec=1.0)
 
         # Apply CBF
         ux, uy, uz = self.apply_cbf(ux, uy, uz)
-        #self.get_logger().info(f"Control signal after CBF: ux={ux:.2f}, uy={uy:.2f}, uz={uz:.2f}", throttle_duration_sec=1.0)
+        self.get_logger().info(f"Control signal after CBF: ux={ux:.2f}, uy={uy:.2f}, uz={uz:.2f}", throttle_duration_sec=1.0)
 
         # Velocity limits
         max_vel_xy = 2  # m/s
@@ -211,6 +211,7 @@ class VelocityController(Node):
         
 
         # Create velocity message
+        self.get_logger().info(f"uy={uy} type={type(uy)}")
         twist_msg = TwistStamped()
         twist_msg.header.stamp = self.get_clock().now().to_msg()
         twist_msg.header.frame_id = "map"
