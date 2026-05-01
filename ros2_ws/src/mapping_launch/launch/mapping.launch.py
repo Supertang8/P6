@@ -128,16 +128,13 @@ def generate_launch_description():
         body_ns = LaunchConfiguration('body_namespace').perform(context)
         use_sim = LaunchConfiguration('use_sim_time').perform(context).lower() == 'true'
 
-<<<<<<< Updated upstream
-=======
-<<<<<<< Updated upstream
+
     # Start octomap only after the pointcloud aggregator has exited.
     octomap = RegisterEventHandler(
         OnProcessExit(
             target_action=aggregator_node,
             on_exit=[octomap_node],
-=======
->>>>>>> Stashed changes
+
         octomap_node = Node(
             package='octomap_server',
             executable='octomap_server_node',
@@ -154,11 +151,7 @@ def generate_launch_description():
                 'ground_filter.distance': 0.3,
                 'ground_filter.plane_distance': 1.0,
                 'sensor_model.max_range': 8.0,
-<<<<<<< Updated upstream
-                'point_cloud_max_z': 0.5,
-=======
                 'point_cloud_max_z': 1.0,
->>>>>>> Stashed changes
                 'point_cloud_min_z': -0.5,
                 'use_sim_time': use_sim,
             }],
@@ -171,10 +164,7 @@ def generate_launch_description():
                 ('/occupied_cells_vis_array', 'occupied_cells_vis_array'),
                 ('/free_cells_vis_array', 'free_cells_vis_array'),
             ],
-<<<<<<< Updated upstream
-=======
->>>>>>> Stashed changes
->>>>>>> Stashed changes
+
         )
         return [
             RegisterEventHandler(
