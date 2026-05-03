@@ -105,7 +105,7 @@ def generate_launch_description():
             'namespace': 'drone',
             'rviz': 'false',
             'use_sim_time': use_sim_time,
-            'octomap_resolution': '0.4', # Lower res
+            'octomap_resolution': '0.64', # Lower res
             'octomap_model_range': '12.0', # Higher range
         }.items(),
         condition=IfCondition(start_drone),
@@ -124,7 +124,7 @@ def generate_launch_description():
                     'namespace': 'rover',
                     'rviz': 'false',
                     'use_sim_time': use_sim_time,
-                    'octomap_resolution': '0.2', # Higher res
+                    'octomap_resolution': '0.16', # Higher res
                     'octomap_model_range': '8.0', # Lower range
                 }.items(),
             )
