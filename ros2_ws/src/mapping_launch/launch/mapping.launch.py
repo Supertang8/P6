@@ -130,10 +130,11 @@ def generate_launch_description():
 
 
     # Start octomap only after the pointcloud aggregator has exited.
-    octomap = RegisterEventHandler(
-        OnProcessExit(
-            target_action=aggregator_node,
-            on_exit=[octomap_node],
+    #octomap = RegisterEventHandler(
+    #    OnProcessExit(
+    #        target_action=aggregator_node,
+    #        on_exit=[octomap_node],
+
 
         octomap_node = Node(
             package='octomap_server',
