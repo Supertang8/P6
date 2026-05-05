@@ -123,7 +123,7 @@ def generate_launch_description():
         # Nodes
         livox_driver,
         TimerAction(period=10.0, actions=[aggregator_node]),
-        TimerAction(period=20.0, actions=[fastlio]),
+        TimerAction(period=25.0, actions=[fastlio]),
         #TimerAction(period=30.0, actions=[drone_cloud_republisher]),
         #TimerAction(period=10.0, actions=[aggregator_node]),
         #fastlio_after_calibration,
