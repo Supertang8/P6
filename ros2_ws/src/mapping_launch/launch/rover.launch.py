@@ -413,7 +413,7 @@ def generate_launch_description():
 
         # ── static TFs (must be first) ──────────────────────────────────
         rover_odom_2_camera_init,
-        drone_odom_2_camera_init,
+        #drone_odom_2_camera_init,
         static_lidar_frame,
         static_base_link_frame,
         static_map_frame,
@@ -424,8 +424,8 @@ def generate_launch_description():
         rover_aggregator,
 
         # ── drone processing (subscribes over network) ───────────────────
-        drone_odom_2_base_link,
-        drone_cloud_republisher,
+        #drone_odom_2_base_link,
+        #drone_cloud_republisher,
 
         # ── calibration chain ────────────────────────────────────────────
         cloud_saver_node,
@@ -455,8 +455,8 @@ def generate_launch_description():
         ),
 
         # ── downstream ───────────────────────────────────────────────────
-        merge_map_node,
-        map_expander,
+        #merge_map_node,
+        #map_expander,
         #nav2_node,
         #rviz_node,
     ])
