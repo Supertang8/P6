@@ -412,23 +412,25 @@ def generate_launch_description():
         declare_use_sim_time_cmd,
 
         # ── static TFs (must be first) ──────────────────────────────────
-        rover_odom_2_camera_init,
+        #rover_odom_2_camera_init,
         #drone_odom_2_camera_init,
-        static_lidar_frame,
-        static_base_link_frame,
-        static_map_frame,
-        static_odom_frame,
+        #static_lidar_frame,
+        #static_base_link_frame,
+        #static_map_frame,
+        #static_odom_frame,
 
         # ── rover hardware (livox + aggregator for calibration) ──────────
         rover_livox,
-        rover_aggregator,
+        rover_fastlio
+        #rover_aggregator,
+
 
         # ── drone processing (subscribes over network) ───────────────────
         #drone_odom_2_base_link,
         #drone_cloud_republisher,
 
         # ── calibration chain ────────────────────────────────────────────
-        cloud_saver_node,
+        #cloud_saver_node,
 
         RegisterEventHandler(
             OnProcessExit(

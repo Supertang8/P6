@@ -109,8 +109,9 @@ def generate_launch_description():
 
     return LaunchDescription([
         declare_use_sim_time_cmd,
-        odom_2_camera_init,
+        #odom_2_camera_init,
         livox_driver,
-        TimerAction(period=10.0, actions=[aggregator_node]),
-        fastlio_after_calibration,
+        fastlio,
+        #TimerAction(period=10.0, actions=[aggregator_node]),
+        #fastlio_after_calibration,
     ])
