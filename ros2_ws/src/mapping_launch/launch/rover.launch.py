@@ -421,7 +421,7 @@ def generate_launch_description():
 
         # ── rover hardware (livox + aggregator for calibration) ──────────
         rover_livox,
-        rover_fastlio
+        TimerAction(period=10.0, actions=[rover_fastlio]),
         #rover_aggregator,
 
 
@@ -432,14 +432,14 @@ def generate_launch_description():
         # ── calibration chain ────────────────────────────────────────────
         #cloud_saver_node,
 
-        RegisterEventHandler(
-            OnProcessExit(
-                target_action=cloud_saver_node,
-                on_exit=[
-                    rover_fastlio,
-                ],
-            )
-        ),
+        #RegisterEventHandler(
+        #    OnProcessExit(
+        #        target_action=cloud_saver_node,
+        #        on_exit=[
+        #            rover_fastlio,
+        #        ],
+        #    )
+        #),
 
         #RegisterEventHandler(
         #    OnProcessExit(
