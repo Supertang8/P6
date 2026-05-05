@@ -393,7 +393,7 @@ def generate_launch_description():
         # ── static TFs (must be first) ──────────────────────────────────
         rover_odom_2_camera_init,
         drone_odom_2_camera_init,
-        rover_odom_2_base_link
+        rover_odom_2_base_link,
         static_lidar_frame,
         static_base_link_frame,
         static_map_frame,

@@ -118,7 +118,7 @@ def generate_launch_description():
 
         # Transforms
         odom_2_camera_init,
-        odom_2_base_link
+        odom_2_base_link,
 
         # Nodes
         livox_driver,
