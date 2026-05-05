@@ -42,7 +42,7 @@ def generate_launch_description():
     use_sim_time = LaunchConfiguration('use_sim_time')
 
     declare_rviz_cmd = DeclareLaunchArgument(
-        'rviz', default_value='true',
+        'rviz', default_value='false',
         description='Start RViz with the dual-robot config')
     declare_use_sim_time_cmd = DeclareLaunchArgument(
         'use_sim_time', default_value='false',
@@ -167,26 +167,6 @@ def generate_launch_description():
         }],
     )
 
-    rover_cloud_republisher = Node(
-        package='mapping_launch',
-        executable='cloud_world_aligned_republisher',
-        name='cloud_world_aligned_republisher',
-        namespace='rover',
-        output='screen',
-        parameters=[{
-            'odom_topic': 'Odometry',
-            'cloud_topic': 'cloud_registered',
-            'output_cloud_topic': 'cloud_registered_world_aligned',
-            'output_frame': 'sensor_world_aligned',
-            'use_sim_time': use_sim_time,
-        }],
-    )
-
-    # ═══════════════════════════════════════════════════════════════════════
-    # 3. ROVER CALIBRATION AGGREGATOR
-    #    Collects a small batch of rover point clouds for MultiLiCa.
-    #    Exits after gather_aggregated_clouds triggers it.
-    # ═══════════════════════════════════════════════════════════════════════
 
     rover_aggregator = Node(
         package='calibrate_lidars',
@@ -207,26 +187,22 @@ def generate_launch_description():
         ],
     )
 
-
-
-    # ═══════════════════════════════════════════════════════════════════════
-    # 4. DRONE PROCESSING STACK (runs on rover, subscribes over network)
-    #    Processes drone fast_lio outputs that arrive via DDS from the drone.
-    # ═══════════════════════════════════════════════════════════════════════
-
-    drone_odom_2_base_link = Node(
-        package='odom_to_tf_ros2',
-        executable='odom_to_tf',
-        namespace='drone',
+    rover_cloud_republisher = Node(
+        package='mapping_launch',
+        executable='cloud_world_aligned_republisher',
+        name='cloud_world_aligned_republisher',
+        namespace='rover',
         output='screen',
         parameters=[{
             'odom_topic': 'Odometry',
-            'frame_id': 'drone/odom',
-            'child_frame_id': 'drone/base_link',
-            'use_yaw_only': True,
+            'cloud_topic': 'cloud_registered',
+            'output_cloud_topic': 'cloud_registered_world_aligned',
+            'output_frame': 'sensor_world_aligned',
             'use_sim_time': use_sim_time,
         }],
     )
+
+
 
     drone_cloud_republisher = Node(
         package='mapping_launch',
@@ -415,20 +391,27 @@ def generate_launch_description():
         declare_use_sim_time_cmd,
 
         # ── static TFs (must be first) ──────────────────────────────────
-        #rover_odom_2_camera_init,
-        #drone_odom_2_camera_init,
-        #static_lidar_frame,
-        #static_base_link_frame,
-        #static_map_frame,
-        #static_odom_frame,
+        rover_odom_2_camera_init,
+        drone_odom_2_camera_init,
+        rover_odom_2_base_link
+        static_lidar_frame,
+        static_base_link_frame,
+        static_map_frame,
+        static_odom_frame,
+        
 
         # ── rover hardware (livox + aggregator for calibration) ──────────
+        merge_map_node,
+        map_expander,
         rover_livox,
         TimerAction(period=10.0, actions=[rover_aggregator]),
         TimerAction(period=15.0, actions=[cloud_saver_node]),
         TimerAction(period=20.0, actions=[camera_init_from_raw_lidar]),
         TimerAction(period=25.0, actions=[rover_fastlio]),
-        
+        TimerAction(period=35.0, actions=[rover_cloud_republisher, drone_cloud_republisher]),
+
+        #nav2_node,
+
 
 
         # ── drone processing (subscribes over network) ───────────────────

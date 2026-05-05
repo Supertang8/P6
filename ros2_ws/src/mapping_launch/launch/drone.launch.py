@@ -22,6 +22,10 @@ def generate_launch_description():
         'use_sim_time', default_value='false',
         description='Use simulation clock if true')
 
+
+    #############################################################################
+    # Transforms
+
     # Static TF: drone/camera_init → drone/odom  (fast_lio world frame anchor)
     odom_2_camera_init = Node(
         package='tf2_ros',
@@ -35,6 +39,40 @@ def generate_launch_description():
         ],
         parameters=[{'use_sim_time': use_sim_time}],
     )
+
+    # Dynamic TF: drone/odom → drone/base_link, derived from fast_lio odometry
+    odom_2_base_link = Node(
+        package='odom_to_tf_ros2',
+        executable='odom_to_tf',
+        namespace='drone',
+        output='screen',
+        parameters=[{
+            'odom_topic': 'Odometry',
+            'frame_id': 'drone/odom',
+            'child_frame_id': 'drone/base_link',
+            'use_yaw_only': True,
+            'use_sim_time': use_sim_time,
+        }],
+    )
+
+
+    drone_cloud_republisher = Node(
+        package='mapping_launch',
+        executable='cloud_world_aligned_republisher',
+        name='cloud_world_aligned_republisher',
+        namespace='drone',
+        output='screen',
+        parameters=[{
+            'odom_topic': 'Odometry',
+            'cloud_topic': 'cloud_registered',
+            'output_cloud_topic': 'cloud_registered_world_aligned',
+            'output_frame': 'sensor_world_aligned',
+            'use_sim_time': use_sim_time,
+        }],
+    )
+
+    #############################################################################
+    # Nodes
 
     # Livox MID360 driver for the drone
     livox_driver = IncludeLaunchDescription(
@@ -63,20 +101,6 @@ def generate_launch_description():
         ],
     )
 
-    # Dynamic TF: drone/odom → drone/base_link, derived from fast_lio odometry
-    odom_2_base_link = Node(
-        package='odom_to_tf_ros2',
-        executable='odom_to_tf',
-        namespace='drone',
-        output='screen',
-        parameters=[{
-            'odom_topic': 'Odometry',
-            'frame_id': 'drone/odom',
-            'child_frame_id': 'drone/base_link',
-            'use_yaw_only': True,
-            'use_sim_time': use_sim_time,
-        }],
-    )
 
     fastlio = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(fast_lio_launch_path),
@@ -88,31 +112,19 @@ def generate_launch_description():
         }.items(),
     )
 
-    # fast_lio and odom→base_link start after the aggregator exits.
-    # The aggregator only exits once the rover's gather_aggregated_clouds has
-    # triggered it, meaning calibration data has been collected on both sides.
-    # MultiLiCa then runs on the rover and publishes the inter-robot TF shortly
-    # after fast_lio comes up.
-    fastlio_after_calibration = RegisterEventHandler(
-        OnProcessExit(
-            target_action=aggregator_node,
-            on_exit=[
-                fastlio,
-                TimerAction(
-                    period=5.0,
-                    actions=[odom_2_base_link],
-                ),
-            ],
-        )
-    )
-
 
     return LaunchDescription([
         declare_use_sim_time_cmd,
-        #odom_2_camera_init,
+
+        # Transforms
+        odom_2_camera_init,
+        odom_2_base_link
+
+        # Nodes
         livox_driver,
         TimerAction(period=10.0, actions=[aggregator_node]),
         TimerAction(period=20.0, actions=[fastlio]),
+        #TimerAction(period=30.0, actions=[drone_cloud_republisher]),
         #TimerAction(period=10.0, actions=[aggregator_node]),
         #fastlio_after_calibration,
     ])
