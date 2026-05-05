@@ -138,14 +138,10 @@ def generate_launch_description():
     # 2. ROVER HARDWARE  – livox only; fast_lio starts after calibration
     # ═══════════════════════════════════════════════════════════════════════
 
-    # Livox MID360 driver for the rover – localhost only so livox/lidar and
-    # livox/imu never cross the network to the drone.
-    rover_livox = GroupAction([
-        SetEnvironmentVariable('ROS_LOCALHOST_ONLY', '1'),
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(livox_rover_launch_path),
-        ),
-    ])
+    # Livox MID360 driver for the rover
+    rover_livox = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(livox_rover_launch_path),
+    )
 
     rover_fastlio = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(fast_lio_launch_path),
