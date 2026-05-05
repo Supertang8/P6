@@ -433,7 +433,7 @@ def generate_launch_description():
             OnProcessExit(
                 target_action=cloud_saver_node,
                 on_exit=[
-                    multi_lica,
+                    rover_fastlio,
                 ],
             )
         ),
