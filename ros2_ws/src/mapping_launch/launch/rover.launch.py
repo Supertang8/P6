@@ -289,16 +289,16 @@ def generate_launch_description():
         output='screen',
         parameters=[{
             'frame_id': 'rover/camera_init',
-            'resolution': 0.2,
+            'resolution': 0.1,
             'base_frame_id': 'rover/base_link',
             'filter_speckles': True,
             'filter_ground_plane': True,
             'ground_filter.angle': 0.3,
-            'ground_filter.distance': 0.3,
+            'ground_filter.distance': 0.1,
             'ground_filter.plane_distance': 1.0,
             'sensor_model.max_range': 8.0,
             'point_cloud_max_z': 1.0,
-            'point_cloud_min_z': -0.5,
+            'point_cloud_min_z': -1.0,
             'use_sim_time': use_sim_time,
         }],
         remappings=[
@@ -323,16 +323,16 @@ def generate_launch_description():
         output='screen',
         parameters=[{
             'frame_id': 'rover/camera_init',
-            'resolution': 0.2,
+            'resolution': 0.1,
             'base_frame_id': 'drone/base_link',
             'filter_speckles': True,
             'filter_ground_plane': True,
             'ground_filter.angle': 0.3,
-            'ground_filter.distance': 0.3,
+            'ground_filter.distance': 0.1,
             'ground_filter.plane_distance': 1.0,
             'sensor_model.max_range': 8.0,
             'point_cloud_max_z': 1.0,
-            'point_cloud_min_z': -0.5,
+            'point_cloud_min_z': -1.0,
             'use_sim_time': use_sim_time,
         }],
         remappings=[
@@ -410,60 +410,6 @@ def generate_launch_description():
         TimerAction(period=25.0, actions=[rover_fastlio]),
         TimerAction(period=35.0, actions=[rover_cloud_republisher, drone_cloud_republisher]),
         TimerAction(period=45.0, actions=[rover_octomap_node, drone_octomap_node]),
-
-
         #nav2_node,
 
-
-
-        # ── drone processing (subscribes over network) ───────────────────
-        #drone_odom_2_base_link,
-        #drone_cloud_republisher,
-
-        # ── calibration chain ────────────────────────────────────────────
-        #cloud_saver_node,
-
-        #RegisterEventHandler(
-        #    OnProcessExit(
-        #        target_action=cloud_saver_node,
-        #        on_exit=[
-        #            rover_fastlio,
-        #        ],
-        #    )
-        #),
-
-        #RegisterEventHandler(
-        #    OnProcessExit(
-        #        target_action=cloud_saver_node,
-        #        on_exit=[
-        #            multi_lica,
-        #        ],
-        #    )
-        #),
-
-        # After calibration: fast_lio stack and inter-robot TF publisher
-        # start immediately; octomaps follow after a short delay to let
-        # fast_lio establish its TF tree before octomap begins.
-
-        #RegisterEventHandler(
-        #    OnProcessExit(
-        #        target_action=multi_lica,
-        #        on_exit=[
-        #            rover_fastlio,
-        #            #rover_cloud_republisher,
-        #            #camera_init_from_raw_lidar,
-        #            TimerAction(
-        #                period=10.0,
-        #                #actions=[rover_octomap_node, drone_octomap_node],
-        #                actions=[camera_init_from_raw_lidar, rover_odom_2_base_link,],
-        #            ),
-        #        ],
-        #    )
-        #),
-
-        # ── downstream ───────────────────────────────────────────────────
-        #merge_map_node,
-        #map_expander,
-        #nav2_node,
-        #rviz_node,
     ])
