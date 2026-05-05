@@ -409,6 +409,8 @@ def generate_launch_description():
         TimerAction(period=20.0, actions=[camera_init_from_raw_lidar]),
         TimerAction(period=25.0, actions=[rover_fastlio]),
         TimerAction(period=35.0, actions=[rover_cloud_republisher, drone_cloud_republisher]),
+        TimerAction(period=45.0, actions=[rover_octomap_node, drone_octomap_node]),
+
 
         #nav2_node,
 
