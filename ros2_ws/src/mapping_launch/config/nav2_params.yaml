@@ -118,8 +118,10 @@ controller_server:
     min_theta_velocity_threshold: 0.001
     failure_tolerance: 0.3
     progress_checker_plugin: "progress_checker"
-    goal_checker_plugins: ["general_goal_checker"] # "precise_goal_checker"
-    controller_plugins: ["FollowPath"]
+    goal_checker_plugins:
+      - "general_goal_checker"
+    controller_plugins:
+      - "FollowPath"
 
     # Progress checker parameters
     progress_checker:
@@ -168,7 +170,14 @@ controller_server:
       trans_stopped_velocity: 0.25
       short_circuit_trajectory_evaluation: True
       stateful: True
-      critics: ["RotateToGoal", "Oscillation", "BaseObstacle", "GoalAlign", "PathAlign", "PathDist", "GoalDist"]
+      critics:
+        - "RotateToGoal"
+        - "Oscillation"
+        - "BaseObstacle"
+        - "GoalAlign"
+        - "PathAlign"
+        - "PathDist"
+        - "GoalDist"
       BaseObstacle.scale: 0.02
       PathAlign.scale: 32.0
       PathAlign.forward_point_distance: 0.1
@@ -193,7 +202,9 @@ local_costmap:
       height: 6
       resolution: 0.2
       robot_radius: 0.22
-      plugins: ["voxel_layer", "inflation_layer"]
+      plugins:
+        - "voxel_layer"
+        - "inflation_layer"
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 3.0
@@ -234,7 +245,10 @@ global_costmap:
       robot_radius: 0.22
       resolution: 0.2
       track_unknown_space: false
-      plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
+      plugins:
+        - "static_layer"
+        - "obstacle_layer"
+        - "inflation_layer"
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True
