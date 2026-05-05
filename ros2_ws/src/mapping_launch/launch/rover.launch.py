@@ -410,6 +410,6 @@ def generate_launch_description():
         TimerAction(period=25.0, actions=[rover_fastlio]),
         TimerAction(period=35.0, actions=[rover_cloud_republisher, drone_cloud_republisher]),
         TimerAction(period=45.0, actions=[rover_octomap_node, drone_octomap_node]),
-        TimerAction(period=60.0, actions=[nav2_node]),
+        #TimerAction(period=60.0, actions=[nav2_node]),
 
     ])
