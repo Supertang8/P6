@@ -429,6 +429,7 @@ def generate_launch_description():
 
         # ── calibration chain ────────────────────────────────────────────
         cloud_saver_node,
+
         RegisterEventHandler(
             OnProcessExit(
                 target_action=cloud_saver_node,
@@ -437,24 +438,35 @@ def generate_launch_description():
                 ],
             )
         ),
+
+        #RegisterEventHandler(
+        #    OnProcessExit(
+        #        target_action=cloud_saver_node,
+        #        on_exit=[
+        #            multi_lica,
+        #        ],
+        #    )
+        #),
+
         # After calibration: fast_lio stack and inter-robot TF publisher
         # start immediately; octomaps follow after a short delay to let
         # fast_lio establish its TF tree before octomap begins.
-        RegisterEventHandler(
-            OnProcessExit(
-                target_action=multi_lica,
-                on_exit=[
-                    rover_fastlio,
-                    #rover_cloud_republisher,
-                    #camera_init_from_raw_lidar,
-                    TimerAction(
-                        period=10.0,
-                        #actions=[rover_octomap_node, drone_octomap_node],
-                        actions=[camera_init_from_raw_lidar, rover_odom_2_base_link,],
-                    ),
-                ],
-            )
-        ),
+
+        #RegisterEventHandler(
+        #    OnProcessExit(
+        #        target_action=multi_lica,
+        #        on_exit=[
+        #            rover_fastlio,
+        #            #rover_cloud_republisher,
+        #            #camera_init_from_raw_lidar,
+        #            TimerAction(
+        #                period=10.0,
+        #                #actions=[rover_octomap_node, drone_octomap_node],
+        #                actions=[camera_init_from_raw_lidar, rover_odom_2_base_link,],
+        #            ),
+        #        ],
+        #    )
+        #),
 
         # ── downstream ───────────────────────────────────────────────────
         #merge_map_node,
