@@ -433,11 +433,7 @@ def generate_launch_description():
             OnProcessExit(
                 target_action=cloud_saver_node,
                 on_exit=[
-                    #multi_lica,
-                    TimerAction(
-                        period=5.0,
-                        actions=[multi_lica],
-                    ),
+                    multi_lica,
                 ],
             )
         ),

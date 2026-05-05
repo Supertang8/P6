@@ -96,9 +96,16 @@ def generate_launch_description():
     fastlio_after_calibration = RegisterEventHandler(
         OnProcessExit(
             target_action=aggregator_node,
-            on_exit=[odom_2_base_link, fastlio],
+            on_exit=[
+                fastlio,
+                TimerAction(
+                    period=5.0,
+                    actions=[odom_2_base_link],
+                ),
+            ],
         )
     )
+
 
     return LaunchDescription([
         declare_use_sim_time_cmd,
