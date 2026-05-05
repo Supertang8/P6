@@ -3,7 +3,7 @@ import os
 from ament_index_python.packages import get_package_share_directory
 
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, RegisterEventHandler, TimerAction
+from launch.actions import DeclareLaunchArgument, GroupAction, IncludeLaunchDescription, RegisterEventHandler, SetEnvironmentVariable, TimerAction
 from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
@@ -36,10 +36,14 @@ def generate_launch_description():
         parameters=[{'use_sim_time': use_sim_time}],
     )
 
-    # Livox MID360 driver for the drone
-    livox_driver = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(livox_drone_launch_path),
-    )
+    # Livox MID360 driver for the drone – localhost only so livox/lidar and
+    # livox/imu never cross the network to the rover.
+    livox_driver = GroupAction([
+        SetEnvironmentVariable('ROS_LOCALHOST_ONLY', '1'),
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(livox_drone_launch_path),
+        ),
+    ])
 
     # Pointcloud aggregator starts 10 s after livox to let the LiDAR stabilise.
     # It waits for the rover's gather_aggregated_clouds to call the trigger
