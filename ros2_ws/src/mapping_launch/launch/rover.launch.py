@@ -421,6 +421,7 @@ def generate_launch_description():
 
         # ── rover hardware (livox + aggregator for calibration) ──────────
         rover_livox,
+        camera_init_from_raw_lidar,
         TimerAction(period=10.0, actions=[rover_fastlio]),
         #rover_aggregator,
 
