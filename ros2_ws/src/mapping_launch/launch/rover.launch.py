@@ -289,7 +289,7 @@ def generate_launch_description():
         output='screen',
         parameters=[{
             'frame_id': 'rover/camera_init',
-            'resolution': 0.1,
+            'resolution': 0.2,
             'base_frame_id': 'rover/base_link',
             'filter_speckles': True,
             'filter_ground_plane': True,
@@ -323,7 +323,7 @@ def generate_launch_description():
         output='screen',
         parameters=[{
             'frame_id': 'rover/camera_init',
-            'resolution': 0.1,
+            'resolution': 0.2,
             'base_frame_id': 'drone/base_link',
             'filter_speckles': True,
             'filter_ground_plane': True,
