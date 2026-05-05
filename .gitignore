@@ -191,6 +191,7 @@ pyrightconfig.json
 install/
 log/
 bags/
+tf_trees/
 
 # Ignore generated docs
 *.dox

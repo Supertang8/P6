@@ -3,7 +3,7 @@ import os
 from ament_index_python.packages import get_package_share_directory
 
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, RegisterEventHandler
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, RegisterEventHandler, TimerAction
 from launch.conditions import IfCondition
 from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
@@ -135,7 +135,7 @@ def generate_launch_description():
     )
 
     # ═══════════════════════════════════════════════════════════════════════
-    # 2. ROVER HARDWARE + FAST_LIO STACK
+    # 2. ROVER HARDWARE  – livox only; fast_lio starts after calibration
     # ═══════════════════════════════════════════════════════════════════════
 
     rover_livox = IncludeLaunchDescription(
@@ -300,8 +300,8 @@ def generate_launch_description():
     # 6. OCTOMAPS  – rover and drone, both built on the rover
     # ═══════════════════════════════════════════════════════════════════════
 
-    # Rover octomap starts as soon as the rover aggregator has finished
-    # collecting calibration data (aggregator exits).
+    # Rover octomap starts after calibration (MultiLiCa exits), together
+    # with rover fast_lio whose data it consumes.
     rover_octomap_node = Node(
         package='octomap_server',
         executable='octomap_server_node',
@@ -419,11 +419,8 @@ def generate_launch_description():
         static_map_frame,
         static_odom_frame,
 
-        # ── rover hardware + fast_lio ────────────────────────────────────
+        # ── rover hardware (livox + aggregator for calibration) ──────────
         rover_livox,
-        rover_fastlio,
-        rover_odom_2_base_link,
-        rover_cloud_republisher,
         rover_aggregator,
 
         # ── drone processing (subscribes over network) ───────────────────
@@ -438,18 +435,22 @@ def generate_launch_description():
                 on_exit=[multi_lica],
             )
         ),
+        # After calibration: fast_lio stack and inter-robot TF publisher
+        # start immediately; octomaps follow after a short delay to let
+        # fast_lio establish its TF tree before octomap begins.
         RegisterEventHandler(
             OnProcessExit(
                 target_action=multi_lica,
-                on_exit=[camera_init_from_raw_lidar, drone_octomap_node],
-            )
-        ),
-
-        # ── octomaps ─────────────────────────────────────────────────────
-        RegisterEventHandler(
-            OnProcessExit(
-                target_action=rover_aggregator,
-                on_exit=[rover_octomap_node],
+                on_exit=[
+                    rover_fastlio,
+                    rover_odom_2_base_link,
+                    rover_cloud_republisher,
+                    camera_init_from_raw_lidar,
+                    TimerAction(
+                        period=5.0,
+                        actions=[rover_octomap_node, drone_octomap_node],
+                    ),
+                ],
             )
         ),
 
