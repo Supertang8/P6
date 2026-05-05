@@ -432,7 +432,13 @@ def generate_launch_description():
         RegisterEventHandler(
             OnProcessExit(
                 target_action=cloud_saver_node,
-                on_exit=[multi_lica],
+                on_exit=[
+                    #multi_lica,
+                    TimerAction(
+                        period=5.0,
+                        actions=[multi_lica],
+                    ),
+                ],
             )
         ),
         # After calibration: fast_lio stack and inter-robot TF publisher
@@ -443,12 +449,12 @@ def generate_launch_description():
                 target_action=multi_lica,
                 on_exit=[
                     rover_fastlio,
-                    rover_odom_2_base_link,
-                    rover_cloud_republisher,
-                    camera_init_from_raw_lidar,
+                    #rover_cloud_republisher,
+                    #camera_init_from_raw_lidar,
                     TimerAction(
-                        period=5.0,
-                        actions=[rover_octomap_node, drone_octomap_node],
+                        period=10.0,
+                        #actions=[rover_octomap_node, drone_octomap_node],
+                        actions=[camera_init_from_raw_lidar, rover_odom_2_base_link,],
                     ),
                 ],
             )
