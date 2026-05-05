@@ -457,6 +457,6 @@ def generate_launch_description():
         # ── downstream ───────────────────────────────────────────────────
         merge_map_node,
         map_expander,
-        nav2_node,
-        rviz_node,
+        #nav2_node,
+        #rviz_node,
     ])
