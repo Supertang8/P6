@@ -206,6 +206,8 @@ def generate_launch_description():
         ],
     )
 
+
+
     # ═══════════════════════════════════════════════════════════════════════
     # 4. DRONE PROCESSING STACK (runs on rover, subscribes over network)
     #    Processes drone fast_lio outputs that arrive via DDS from the drone.
@@ -421,9 +423,11 @@ def generate_launch_description():
 
         # ── rover hardware (livox + aggregator for calibration) ──────────
         rover_livox,
-        camera_init_from_raw_lidar,
-        TimerAction(period=10.0, actions=[rover_fastlio]),
-        #rover_aggregator,
+        TimerAction(period=10.0, actions=[rover_aggregator]),
+        TimerAction(period=15.0, actions=[cloud_saver_node]),
+        TimerAction(period=20.0, actions=[camera_init_from_raw_lidar]),
+        TimerAction(period=25.0, actions=[rover_fastlio]),
+        
 
 
         # ── drone processing (subscribes over network) ───────────────────
