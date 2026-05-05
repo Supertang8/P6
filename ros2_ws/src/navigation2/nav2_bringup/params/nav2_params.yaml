@@ -193,34 +193,39 @@ local_costmap:
       height: 6
       resolution: 0.2
       robot_radius: 0.22
-      plugins: ["voxel_layer", "inflation_layer"]
+      plugins: ["obstacle_layer", "inflation_layer"]
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 3.0
-        inflation_radius: 0.25
-      voxel_layer:
-        plugin: "nav2_costmap_2d::VoxelLayer"
+        inflation_radius: 0.55
+      obstacle_layer:
+        plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True
-        publish_voxel_map: True
-        origin_z: 0.0
-        z_resolution: 0.05
-        z_voxels: 16
-        max_obstacle_height: 2.0
-        mark_threshold: 0
-        observation_sources: scan
-        scan:
-          topic: /scan
-          max_obstacle_height: 2.0
+        observation_sources: rover_cloud drone_cloud
+        rover_cloud:
+          topic: /rover/cloud_registered
+          sensor_frame: rover/base_link
+          data_type: PointCloud2
+          min_obstacle_height: 0.3
+          max_obstacle_height: 1.5
           clearing: True
           marking: True
-          data_type: "LaserScan"
-          raytrace_max_range: 3.0
+          raytrace_max_range: 8.0
           raytrace_min_range: 0.0
-          obstacle_max_range: 2.5
+          obstacle_max_range: 7.5
           obstacle_min_range: 0.0
-      static_layer:
-        plugin: "nav2_costmap_2d::StaticLayer"
-        map_subscribe_transient_local: True
+        drone_cloud:
+          topic: /drone/cloud_registered
+          sensor_frame: drone/base_link
+          data_type: PointCloud2
+          min_obstacle_height: 0.3
+          max_obstacle_height: 1.5
+          clearing: True
+          marking: True
+          raytrace_max_range: 8.0
+          raytrace_min_range: 0.0
+          obstacle_max_range: 7.5
+          obstacle_min_range: 0.0
       always_send_full_costmap: True
 
 global_costmap:
@@ -233,29 +238,43 @@ global_costmap:
       use_sim_time: True
       robot_radius: 0.22
       resolution: 0.2
+      rolling_window: true
+      width: 30
+      height: 30
       track_unknown_space: false
-      plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
+      plugins: ["obstacle_layer", "inflation_layer"]
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True
-        observation_sources: scan
-        scan:
-          topic: /scan
-          max_obstacle_height: 2.0
+        observation_sources: rover_cloud drone_cloud
+        rover_cloud:
+          topic: /rover/cloud_registered
+          sensor_frame: rover/base_link
+          data_type: PointCloud2
+          min_obstacle_height: 0.3
+          max_obstacle_height: 1.5
           clearing: True
           marking: True
-          data_type: "LaserScan"
-          raytrace_max_range: 3.0
+          raytrace_max_range: 8.0
           raytrace_min_range: 0.0
-          obstacle_max_range: 2.5
+          obstacle_max_range: 7.5
           obstacle_min_range: 0.0
-      static_layer:
-        plugin: "nav2_costmap_2d::StaticLayer"
-        map_subscribe_transient_local: True
+        drone_cloud:
+          topic: /drone/cloud_registered
+          sensor_frame: drone/base_link
+          data_type: PointCloud2
+          min_obstacle_height: 0.3
+          max_obstacle_height: 1.5
+          clearing: True
+          marking: True
+          raytrace_max_range: 8.0
+          raytrace_min_range: 0.0
+          obstacle_max_range: 7.5
+          obstacle_min_range: 0.0
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 3.0
-        inflation_radius: 0.25
+        inflation_radius: 0.55
       always_send_full_costmap: True
 
 map_server:

@@ -3,7 +3,7 @@ import os
 from ament_index_python.packages import get_package_share_directory
 
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, GroupAction, IncludeLaunchDescription, RegisterEventHandler, SetEnvironmentVariable, TimerAction
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, RegisterEventHandler, TimerAction
 from launch.conditions import IfCondition
 from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
@@ -187,38 +187,6 @@ def generate_launch_description():
         ],
     )
 
-    rover_cloud_republisher = Node(
-        package='mapping_launch',
-        executable='cloud_world_aligned_republisher',
-        name='cloud_world_aligned_republisher',
-        namespace='rover',
-        output='screen',
-        parameters=[{
-            'odom_topic': 'Odometry',
-            'cloud_topic': 'cloud_registered',
-            'output_cloud_topic': 'cloud_registered_world_aligned',
-            'output_frame': 'sensor_world_aligned',
-            'use_sim_time': use_sim_time,
-        }],
-    )
-
-
-
-    drone_cloud_republisher = Node(
-        package='mapping_launch',
-        executable='cloud_world_aligned_republisher',
-        name='cloud_world_aligned_republisher',
-        namespace='drone',
-        output='screen',
-        parameters=[{
-            'odom_topic': 'Odometry',
-            'cloud_topic': 'cloud_registered',
-            'output_cloud_topic': 'cloud_registered_world_aligned',
-            'output_frame': 'sensor_world_aligned',
-            'use_sim_time': use_sim_time,
-        }],
-    )
-
     # ═══════════════════════════════════════════════════════════════════════
     # 5. CALIBRATION CHAIN
     #    gather_aggregated_clouds → MultiLiCa → camera_init_tf
@@ -276,97 +244,8 @@ def generate_launch_description():
     )
 
     # ═══════════════════════════════════════════════════════════════════════
-    # 6. OCTOMAPS  – rover and drone, both built on the rover
+    # 6. DOWNSTREAM  – navigation, visualisation
     # ═══════════════════════════════════════════════════════════════════════
-
-    # Rover octomap starts after calibration (MultiLiCa exits), together
-    # with rover fast_lio whose data it consumes.
-    rover_octomap_node = Node(
-        package='octomap_server',
-        executable='octomap_server_node',
-        name='octomap_server',
-        namespace='rover',
-        output='screen',
-        parameters=[{
-            'frame_id': 'rover/camera_init',
-            'resolution': 0.2,
-            'base_frame_id': 'rover/base_link',
-            'filter_speckles': True,
-            'filter_ground_plane': False,
-            'ground_filter.angle': 0.3,
-            'ground_filter.distance': 0.1,
-            'ground_filter.plane_distance': 1.0,
-            'sensor_model.max_range': 8.0,
-            'point_cloud_max_z': 1.0,
-            'point_cloud_min_z': -0.1,
-            'use_sim_time': use_sim_time,
-        }],
-        remappings=[
-            ('cloud_in', 'cloud_registered_world_aligned'),
-            ('/projected_map', 'map'),
-            ('/octomap_binary', 'octomap_binary'),
-            ('/octomap_full', 'octomap_full'),
-            ('/octomap_point_cloud_centers', 'octomap_point_cloud_centers'),
-            ('/occupied_cells_vis_array', 'occupied_cells_vis_array'),
-            ('/free_cells_vis_array', 'free_cells_vis_array'),
-        ],
-    )
-
-    # Drone octomap and camera_init_tf both start after MultiLiCa exits.
-    # The octomap will wait for the inter-robot TF that camera_init_tf
-    # publishes once the drone's fast_lio TF becomes available.
-    drone_octomap_node = Node(
-        package='octomap_server',
-        executable='octomap_server_node',
-        name='octomap_server',
-        namespace='drone',
-        output='screen',
-        parameters=[{
-            'frame_id': 'rover/camera_init',
-            'resolution': 0.2,
-            'base_frame_id': 'drone/base_link',
-            'filter_speckles': True,
-            'filter_ground_plane': False,
-            'ground_filter.angle': 0.3,
-            'ground_filter.distance': 0.1,
-            'ground_filter.plane_distance': 1.0,
-            'sensor_model.max_range': 8.0,
-            'point_cloud_max_z': 1.0,
-            'point_cloud_min_z': -0.3,
-            'use_sim_time': use_sim_time,
-        }],
-        remappings=[
-            ('cloud_in', 'cloud_registered_world_aligned'),
-            ('/projected_map', 'map'),
-            ('/octomap_binary', 'octomap_binary'),
-            ('/octomap_full', 'octomap_full'),
-            ('/octomap_point_cloud_centers', 'octomap_point_cloud_centers'),
-            ('/occupied_cells_vis_array', 'occupied_cells_vis_array'),
-            ('/free_cells_vis_array', 'free_cells_vis_array'),
-        ],
-    )
-
-    # ═══════════════════════════════════════════════════════════════════════
-    # 7. DOWNSTREAM  – map merge, navigation, visualisation
-    # ═══════════════════════════════════════════════════════════════════════
-
-    merge_map_node = Node(
-        package='merge_map',
-        executable='merge_map',
-        output='screen',
-        parameters=[{'use_sim_time': use_sim_time}],
-        remappings=[
-            ('/map1', '/rover/projected_map'),
-            ('/map2', '/drone/projected_map'),
-        ],
-    )
-
-    map_expander = Node(
-        package='livox_converter',
-        executable='map_expander',
-        name='map_expander',
-        parameters=[{'use_sim_time': use_sim_time}],
-    )
 
     nav2_node = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(nav2_launch),
@@ -401,15 +280,11 @@ def generate_launch_description():
         
 
         # ── rover hardware (livox + aggregator for calibration) ──────────
-        merge_map_node,
-        map_expander,
         rover_livox,
         TimerAction(period=10.0, actions=[rover_aggregator]),
         TimerAction(period=15.0, actions=[cloud_saver_node]),
         TimerAction(period=20.0, actions=[camera_init_from_raw_lidar]),
         TimerAction(period=30.0, actions=[rover_fastlio]),
-        TimerAction(period=50.0, actions=[rover_cloud_republisher, drone_cloud_republisher]),
-        TimerAction(period=60.0, actions=[rover_octomap_node, drone_octomap_node]),
-        #TimerAction(period=70.0, actions=[nav2_node]),
+        TimerAction(period=40.0, actions=[nav2_node]),
 
     ])
