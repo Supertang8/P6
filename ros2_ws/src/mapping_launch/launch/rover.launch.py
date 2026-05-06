@@ -448,7 +448,7 @@ def generate_launch_description():
         
 
         # ── rover hardware (livox + aggregator for calibration) ──────────
-        #merge_map_node,
+        merge_map_node,
         map_expander,
         rover_livox,
         TimerAction(period=10.0, actions=[rover_aggregator]),
@@ -456,7 +456,7 @@ def generate_launch_description():
         TimerAction(period=20.0, actions=[camera_init_from_raw_lidar]),
         TimerAction(period=30.0, actions=[rover_fastlio]),
         TimerAction(period=50.0, actions=[rover_cloud_republisher, drone_cloud_republisher]),
-        TimerAction(period=60.0, actions=[relay_rover_cloud, relay_drone_cloud]),
+        #TimerAction(period=60.0, actions=[relay_rover_cloud, relay_drone_cloud]),
         #TimerAction(period=70.0, actions=[combined_octomap_node]),
         #TimerAction(period=60.0, actions=[rover_octomap_node]),
         #TimerAction(period=70.0, actions=[drone_octomap_node]),
