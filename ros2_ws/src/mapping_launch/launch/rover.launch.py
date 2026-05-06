@@ -9,6 +9,7 @@ from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
+from launch_ros.descriptions import ParameterFile
 
 
 def generate_launch_description():
@@ -33,10 +34,15 @@ def generate_launch_description():
             f'Could not locate Multi_LiCa directory, tried: {multi_lica_src_candidates}')
     calibration_files_dir = os.path.join(multi_lica_src, 'data', 'drone_to_rover_calibration')
 
-    nav2_pkg = get_package_share_directory('nav2_bringup')
-    nav2_launch = os.path.join(nav2_pkg, 'launch', 'navigation_launch.py')
-    nav2_params = os.path.join(
-        get_package_share_directory('mapping_launch'), 'config', 'nav2_params.yaml')
+    #nav2_pkg = get_package_share_directory('nav2_bringup')
+    #nav2_launch = os.path.join(nav2_pkg, 'launch', 'navigation_launch.py')
+    #nav2_params = os.path.join(
+    #    get_package_share_directory('mapping_launch'), 'config', 'nav2_params.yaml')
+
+    nav2_launch = os.path.join(
+        get_package_share_directory('nav2_bringup'), 'launch', 'navigation_launch.py')
+    nav2_params = os.path.expanduser(
+        '~/ros2_ws/src/navigation2/nav2_bringup/params/nav2_params.yaml')
 
     # ── args ─────────────────────────────────────────────────────────────────
     rviz = LaunchConfiguration('rviz')
