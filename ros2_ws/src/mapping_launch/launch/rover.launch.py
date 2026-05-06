@@ -226,6 +226,44 @@ def generate_launch_description():
         }],
     )
 
+
+relay_rover_cloud = Node(
+    package='topic_tools',
+    executable='relay',
+    name='relay_rover_cloud',
+    arguments=['/rover/cloud_registered_world_aligned', '/merged_cloud'],
+)
+
+relay_drone_cloud = Node(
+    package='topic_tools',
+    executable='relay',
+    name='relay_drone_cloud',
+    arguments=['/drone/cloud_registered_world_aligned', '/merged_cloud'],
+)
+
+combined_octomap_node = Node(
+    package='octomap_server',
+    executable='octomap_server_node',
+    name='octomap_server',
+    output='screen',
+    parameters=[{
+        'frame_id': 'rover/camera_init',
+        'resolution': 0.2,
+        'base_frame_id': 'rover/base_link',
+        'filter_speckles': True,
+        'filter_ground_plane': False,
+        'sensor_model.max_range': 8.0,
+        'point_cloud_max_z': 1.0,
+        'point_cloud_min_z': -0.3,
+        'use_sim_time': use_sim_time,
+    }],
+    remappings=[
+        ('cloud_in', '/merged_cloud'),
+        ('/projected_map', '/map'),
+    ],
+)
+
+
     # ═══════════════════════════════════════════════════════════════════════
     # 5. CALIBRATION CHAIN
     #    gather_aggregated_clouds → MultiLiCa → camera_init_tf
@@ -408,7 +446,7 @@ def generate_launch_description():
         
 
         # ── rover hardware (livox + aggregator for calibration) ──────────
-        merge_map_node,
+        #merge_map_node,
         map_expander,
         rover_livox,
         TimerAction(period=10.0, actions=[rover_aggregator]),
@@ -416,7 +454,13 @@ def generate_launch_description():
         TimerAction(period=20.0, actions=[camera_init_from_raw_lidar]),
         TimerAction(period=30.0, actions=[rover_fastlio]),
         TimerAction(period=50.0, actions=[rover_cloud_republisher, drone_cloud_republisher]),
-        TimerAction(period=60.0, actions=[rover_octomap_node, drone_octomap_node]),
-        TimerAction(period=70.0, actions=[nav2_node]),
+        TimerAction(period=60.0, actions=[relay_rover_cloud, relay_drone_cloud]),
+        TimerAction(period=70.0, actions=[combined_octomap_node]),
+        #TimerAction(period=60.0, actions=[rover_octomap_node]),
+        #TimerAction(period=70.0, actions=[drone_octomap_node]),
+        #TimerAction(period=70.0, actions=[nav2_node]),
+
+        #TimerAction(period=60.0, actions=[relay_rover_cloud, relay_drone_cloud, combined_octomap_node]),
+
 
     ])
