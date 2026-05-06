@@ -227,41 +227,41 @@ def generate_launch_description():
     )
 
 
-relay_rover_cloud = Node(
-    package='topic_tools',
-    executable='relay',
-    name='relay_rover_cloud',
-    arguments=['/rover/cloud_registered_world_aligned', '/merged_cloud'],
-)
+    relay_rover_cloud = Node(
+        package='topic_tools',
+        executable='relay',
+        name='relay_rover_cloud',
+        arguments=['/rover/cloud_registered_world_aligned', '/merged_cloud'],
+    )
 
-relay_drone_cloud = Node(
-    package='topic_tools',
-    executable='relay',
-    name='relay_drone_cloud',
-    arguments=['/drone/cloud_registered_world_aligned', '/merged_cloud'],
-)
+    relay_drone_cloud = Node(
+        package='topic_tools',
+        executable='relay',
+        name='relay_drone_cloud',
+        arguments=['/drone/cloud_registered_world_aligned', '/merged_cloud'],
+    )
 
-combined_octomap_node = Node(
-    package='octomap_server',
-    executable='octomap_server_node',
-    name='octomap_server',
-    output='screen',
-    parameters=[{
-        'frame_id': 'rover/camera_init',
-        'resolution': 0.2,
-        'base_frame_id': 'rover/base_link',
-        'filter_speckles': True,
-        'filter_ground_plane': False,
-        'sensor_model.max_range': 8.0,
-        'point_cloud_max_z': 1.0,
-        'point_cloud_min_z': -0.3,
-        'use_sim_time': use_sim_time,
-    }],
-    remappings=[
-        ('cloud_in', '/merged_cloud'),
-        ('/projected_map', '/map'),
-    ],
-)
+    combined_octomap_node = Node(
+        package='octomap_server',
+        executable='octomap_server_node',
+        name='octomap_server',
+        output='screen',
+        parameters=[{
+            'frame_id': 'rover/camera_init',
+            'resolution': 0.2,
+            'base_frame_id': 'rover/base_link',
+            'filter_speckles': True,
+            'filter_ground_plane': False,
+            'sensor_model.max_range': 8.0,
+            'point_cloud_max_z': 1.0,
+            'point_cloud_min_z': -0.3,
+            'use_sim_time': use_sim_time,
+        }],
+        remappings=[
+            ('cloud_in', '/merged_cloud'),
+            ('/projected_map', '/map'),
+        ],
+    )
 
 
     # ═══════════════════════════════════════════════════════════════════════
