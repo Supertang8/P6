@@ -74,14 +74,10 @@ def generate_launch_description():
     #############################################################################
     # Nodes
 
-    # Livox MID360 driver for the drone — localhost-only so livox/lidar and
-    # livox/imu are not discoverable across the network.
-    livox_driver = GroupAction([
-        SetEnvironmentVariable('ROS_LOCALHOST_ONLY', '1'),
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(livox_drone_launch_path),
-        ),
-    ])
+    # Livox MID360 driver for the drone
+    livox_driver = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(livox_drone_launch_path),
+    )
 
     # Pointcloud aggregator starts 10 s after livox to let the LiDAR stabilise.
     # It waits for the rover's gather_aggregated_clouds to call the trigger
