@@ -203,8 +203,8 @@ def generate_launch_description():
         parameters=[{
             'odom_topic': 'Odometry',
             'cloud_topic': 'cloud_registered',
-            #'output_cloud_topic': 'cloud_registered_world_aligned',
-            'output_cloud_topic': '/merged_cloud',
+            'output_cloud_topic': 'cloud_registered_world_aligned',
+            #'output_cloud_topic': '/merged_cloud',
             'output_frame': 'sensor_world_aligned',
             'use_sim_time': use_sim_time,
         }],
@@ -221,8 +221,8 @@ def generate_launch_description():
         parameters=[{
             'odom_topic': 'Odometry',
             'cloud_topic': 'cloud_registered',
-            #'output_cloud_topic': 'cloud_registered_world_aligned',
-            'output_cloud_topic': '/merged_cloud',
+            'output_cloud_topic': 'cloud_registered_world_aligned',
+            #'output_cloud_topic': '/merged_cloud',
             'output_frame': 'sensor_world_aligned',
             'use_sim_time': use_sim_time,
         }],
