@@ -119,7 +119,7 @@
     <model name="rock2">
       <static>true</static>
       <pose>5.79 1.71 0.1 0 0 0</pose>
-      <link name="rock1_link">
+      <link name="rock2_link">
         <visual name="visual">
           <geometry>
             <mesh>
@@ -143,7 +143,7 @@
     <model name="rock3">
       <static>true</static>
       <pose>3.47 -2.64 0.1 0 0 0</pose>
-      <link name="rock1_link">
+      <link name="rock3_link">
         <visual name="visual">
           <geometry>
             <mesh>
@@ -167,7 +167,7 @@
     <model name="rock4">
       <static>true</static>
       <pose>7.49 -0.33 0.1 0 0 0</pose>
-      <link name="rock1_link">
+      <link name="rock4_link">
         <visual name="visual">
           <geometry>
             <mesh>
@@ -191,7 +191,7 @@
     <model name="rock5">
       <static>true</static>
       <pose>5.08 -0.89 0.1 0 0 0</pose>
-      <link name="rock1_link">
+      <link name="rock5_link">
         <visual name="visual">
           <geometry>
             <mesh>
@@ -212,10 +212,10 @@
     </model>
 
     <!-- Rock 6 -->
-    <model name="rock6  ">
+    <model name="rock6">
       <static>true</static>
       <pose>0.42 -5.69 0.1 0 0 0</pose>
-      <link name="rock1_link">
+      <link name="rock6_link">
         <visual name="visual">
           <geometry>
             <mesh>
@@ -239,7 +239,7 @@
     <model name="rock7">
       <static>true</static>
       <pose>4.7 -7.83 0.1 0 0 0</pose>
-      <link name="rock1_link">
+      <link name="rock7_link">
         <visual name="visual">
           <geometry>
             <mesh>
@@ -263,7 +263,7 @@
     <model name="rock8">
       <static>true</static>
       <pose>2.88 -12.16 0.1 0 0 0</pose>
-      <link name="rock1_link">
+      <link name="rock8_link">
         <visual name="visual">
           <geometry>
             <mesh>
@@ -287,7 +287,7 @@
     <model name="rock9">
       <static>true</static>
       <pose>9.72 -11.83 0.1 0 0 0</pose>
-      <link name="rock1_link">
+      <link name="rock9_link">
         <visual name="visual">
           <geometry>
             <mesh>
@@ -311,7 +311,7 @@
     <model name="rock10">
       <static>true</static>
       <pose>10.45 -4.48 0.1 0 0 0</pose>
-      <link name="rock1_link">
+      <link name="rock10_link">
         <visual name="visual">
           <geometry>
             <mesh>
@@ -335,7 +335,7 @@
     <model name="rock11">
       <static>true</static>
       <pose>13.69 -0.11 0.1 0 0 0</pose>
-      <link name="rock1_link">
+      <link name="rock11_link">
         <visual name="visual">
           <geometry>
             <mesh>
@@ -359,7 +359,7 @@
     <model name="rock12">
       <static>true</static>
       <pose>11.69 2.89 0.1 0 0 0</pose>
-      <link name="rock1_link">
+      <link name="rock12_link">
         <visual name="visual">
           <geometry>
             <mesh>
@@ -383,7 +383,7 @@
     <model name="rock13">
       <static>true</static>
       <pose>5.79 6.71 0.1 0 0 0</pose>
-      <link name="rock1_link">
+      <link name="rock13_link">
         <visual name="visual">
           <geometry>
             <mesh>
@@ -407,7 +407,7 @@
     <model name="rock14">
       <static>true</static>
       <pose>-2.21 0.71 0.1 0 0 0</pose>
-      <link name="rock1_link">
+      <link name="rock14_link">
         <visual name="visual">
           <geometry>
             <mesh>

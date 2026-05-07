@@ -78,14 +78,14 @@ def spawn_robot(context: LaunchContext, namespace: LaunchConfiguration):
             "-allow_renaming", "true",
 
             # Position
-            "-x", "1.0",
-            "-y", "4.0",
+            "-x", "0.0",
+            "-y", "0.0",
             "-z", "0.5",
 
             # Orientation (in radians)
             "-R", "0.0",   # roll
             "-P", "0.0",   # pitch
-            "-Y", "-1",  # yaw (≈ 90 degrees)
+            "-Y", "0.0",  # yaw (≈ 90 degrees)
         ],
     )
 

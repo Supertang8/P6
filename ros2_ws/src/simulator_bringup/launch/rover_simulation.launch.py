@@ -16,6 +16,8 @@ def generate_launch_description():
     fast_lio_launch = os.path.join(fast_lio_pkg, 'launch', 'mapping.launch.py')
     fast_lio_config = os.path.expanduser('~/ros2_ws/src/FAST_LIO/config/mid360.yaml')
 
+    rviz_config = os.path.expanduser('~/ros2_ws/src/simulator_bringup/rviz/Simulator.rviz')
+
     nav2_pkg = get_package_share_directory('nav2_bringup')
     nav2_launch = os.path.join(nav2_pkg, 'launch', 'navigation_launch.py')
     nav2_params = os.path.expanduser('~/ros2_ws/src/navigation2/nav2_bringup/params/nav2_params.yaml')
@@ -73,7 +75,7 @@ def generate_launch_description():
                 actions=[
                     IncludeLaunchDescription(
                         PythonLaunchDescriptionSource(fast_lio_launch),
-                        launch_arguments={'config_file': fast_lio_config}.items()
+                        launch_arguments={'config_file': fast_lio_config, 'rviz_cfg': rviz_config}.items()
                     ),
                 ]
         ),
