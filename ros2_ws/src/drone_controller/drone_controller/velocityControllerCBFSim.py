@@ -11,6 +11,7 @@ from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 
 import tf2_ros
 from tf2_ros import TransformException
+from std_msgs.msg import Float64
 
 
 class VelocityController(Node):
@@ -41,8 +42,10 @@ class VelocityController(Node):
         self.prev_error_z = 0.0
 
         # CBF params
-        self.max_dist = 10.0 #Maximum distance from drone to rover
-        self.alpha = 2.0
+        max_dist = 15.0
+        safety_buffer = 1
+        self.max_dist = max_dist-safety_buffer#Maximum distance from drone to rover
+        self.alpha = 1.5
         ####### Rover state FOR TESTING PURPOSES, REPLACE WITH REAL SUBSCRIBER##########
         self.rover_pos = [0.0, 0.0, 0.0]  # [x,y,z]
         self.rover_vel = [0.0, 0.0, 0.0]
@@ -72,6 +75,9 @@ class VelocityController(Node):
 
         # Publisher for velocity commands (ROS standard)
         self.twist_pub = self.create_publisher(TwistStamped, "/offboard/velocity", qos)
+
+        # Publisher for distance to rover
+        self.distance_pub = self.create_publisher(Float64, "/drone_rover_distance", qos)
 
         # Timer to compute and publish velocity at 10 Hz
         self.timer = self.create_timer(0.1, self.control_loop)
@@ -145,11 +151,22 @@ class VelocityController(Node):
 
     def control_loop(self):
         # Refresh position from TF every tick
-        if not self._update_rover_position_from_tf():
-            return
+        self._update_rover_position_from_tf()
+            
 
         if self.desired_pose is None or self.current_pos is None:
             return
+
+        # Compute distance to rover
+        dx = self.current_pos[0] - self.rover_pos[0]
+        dy = self.current_pos[1] - self.rover_pos[1]
+        dz = self.current_pos[2] - self.rover_pos[2]
+        distance = math.sqrt(dx**2 + dy**2 + dz**2)
+
+        # Publish distance
+        dist_msg = Float64()
+        dist_msg.data = distance
+        self.distance_pub.publish(dist_msg)
 
         # Extract position differences
         dx = self.desired_pose.pose.position.x - self.current_pos[0]
@@ -195,7 +212,7 @@ class VelocityController(Node):
 
         # Velocity limits
         max_vel_xy = 2.0  # m/s
-        max_vel_z = 3.0   # m/s
+        max_vel_z = 2.0   # m/s
         ux = max(min(ux, max_vel_xy), -max_vel_xy)
         uy = max(min(uy, max_vel_xy), -max_vel_xy)
         uz = max(min(uz, max_vel_z), -max_vel_z)

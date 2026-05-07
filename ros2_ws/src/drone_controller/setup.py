@@ -33,6 +33,7 @@ setup(
         'velocityControllerCBF = drone_controller.velocityControllerCBF:main',
         'velocityControllerCBFSim = drone_controller.velocityControllerCBFSim:main',
         'velocityControllerCBFpx4Location = drone_controller.velocityControllerCBFpx4Location:main',
+        'dome_generator = drone_controller.dome_generator:main',
         ],
     },
 )
