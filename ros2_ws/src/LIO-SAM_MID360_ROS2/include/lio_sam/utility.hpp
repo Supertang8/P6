@@ -58,6 +58,7 @@
 #include <array>
 #include <thread>
 #include <mutex>
+#include <atomic>
 
 using namespace std;
 
@@ -114,6 +115,18 @@ public:
     Eigen::Matrix3d extRPY;
     Eigen::Vector3d extTrans;
     Eigen::Quaterniond extQRPY;
+
+    // Startup gravity-direction estimation (FAST-LIO-style).
+    // When gravityEstimationEnabled is true, each node accumulates the first
+    // gravityCalibrationSamples IMU readings, treats their average as the
+    // gravity direction in the raw sensor frame, and overwrites extRot
+    // with the rotation that maps that direction onto +Z (body up).
+    // Until calibration is done, IMU and lidar callbacks return early.
+    bool   gravityEstimationEnabled;
+    int    gravityCalibrationSamples;
+    std::vector<Eigen::Vector3d> gravitySamples_;
+    std::atomic<bool> gravityCalibrationDone_{false};
+    std::mutex gravityCalMutex_;
 
     // LOAM
     float edgeThreshold;
@@ -252,6 +265,17 @@ public:
         extTrans = Eigen::Map<const Eigen::Matrix<double, -1, -1, Eigen::RowMajor>>(extTransV.data(), 3, 1);
         extQRPY = Eigen::Quaterniond(extRPY);
 
+        declare_parameter("gravityEstimationEnabled", false);
+        get_parameter("gravityEstimationEnabled", gravityEstimationEnabled);
+        declare_parameter("gravityCalibrationSamples", 200);
+        get_parameter("gravityCalibrationSamples", gravityCalibrationSamples);
+        if (!gravityEstimationEnabled) {
+            // No runtime calibration requested; treat the YAML extRot as final.
+            gravityCalibrationDone_.store(true);
+        } else {
+            gravitySamples_.reserve(gravityCalibrationSamples);
+        }
+
         declare_parameter("edgeThreshold", 1.0);
         get_parameter("edgeThreshold", edgeThreshold);
         declare_parameter("surfThreshold", 0.1);
@@ -310,6 +334,86 @@ public:
         get_parameter("globalMapVisualizationLeafSize", globalMapVisualizationLeafSize);
 
         usleep(100);
+    }
+
+    bool isGravityCalibrationDone() const
+    {
+        return gravityCalibrationDone_.load(std::memory_order_acquire);
+    }
+
+    // Accumulate IMU samples until we have enough to estimate gravity, then
+    // overwrite extRot with the rotation that takes the measured gravity
+    // direction in the raw sensor frame onto body +Z. Returns true once
+    // calibration is complete (or was never requested) so callers can
+    // proceed with normal processing.
+    bool collectGravitySample(const sensor_msgs::msg::Imu& imu_in)
+    {
+        if (gravityCalibrationDone_.load(std::memory_order_acquire)) return true;
+
+        std::lock_guard<std::mutex> lk(gravityCalMutex_);
+        if (gravityCalibrationDone_.load(std::memory_order_relaxed)) return true;
+
+        gravitySamples_.emplace_back(
+            imu_in.linear_acceleration.x,
+            imu_in.linear_acceleration.y,
+            imu_in.linear_acceleration.z);
+
+        if ((int)gravitySamples_.size() < gravityCalibrationSamples) {
+            return false;
+        }
+
+        Eigen::Vector3d g_imu = Eigen::Vector3d::Zero();
+        for (const auto& s : gravitySamples_) g_imu += s;
+        g_imu /= static_cast<double>(gravitySamples_.size());
+        const double mag = g_imu.norm();
+
+        // Sanity check: the accel must read close to 1 g (Livox MID360 reports
+        // accel in g). If not, we were probably moving — keep the YAML extRot.
+        if (mag < 0.85 || mag > 1.15) {
+            RCLCPP_WARN(get_logger(),
+                "[gravity-cal] mean |a|=%.4f g over %d samples (expected ~1.0). "
+                "Keeping YAML extrinsicRot.", mag, (int)gravitySamples_.size());
+        } else {
+            const Eigen::Vector3d gN = g_imu / mag;
+            const Eigen::Vector3d target(0.0, 0.0, 1.0);
+            const Eigen::Vector3d axis = gN.cross(target);
+            const double n = axis.norm();
+            const double cosA = std::max(-1.0, std::min(1.0, gN.dot(target)));
+            Eigen::Matrix3d R;
+            if (n < 1e-9) {
+                R = (cosA > 0)
+                    ? Eigen::Matrix3d::Identity()
+                    : (Eigen::Matrix3d() <<
+                         1, 0, 0,
+                         0, -1, 0,
+                         0, 0, -1).finished();
+            } else {
+                const Eigen::Vector3d ku = axis / n;
+                Eigen::Matrix3d K;
+                K <<      0, -ku.z(),  ku.y(),
+                     ku.z(),       0, -ku.x(),
+                    -ku.y(),  ku.x(),       0;
+                const double sinA = n;
+                R = Eigen::Matrix3d::Identity() + sinA * K + (1.0 - cosA) * (K * K);
+            }
+            // Update only extRot. extRPY / extQRPY drive imuConverter's
+            // hardcoded q_final for 6-axis IMUs (MID360); leaving them at the
+            // YAML identity keeps cloudInfo.imu_*_init at zero so mapOpt
+            // initializes the first pose at identity orientation.
+            extRot = R;
+            RCLCPP_INFO(get_logger(),
+                "[gravity-cal] done after %d samples. mean a in IMU = "
+                "(%+.4f, %+.4f, %+.4f) g, |a|=%.4f. extRot updated; "
+                "tilt angle = %.2f deg.",
+                (int)gravitySamples_.size(),
+                g_imu.x(), g_imu.y(), g_imu.z(), mag,
+                std::acos(std::abs(cosA)) * 180.0 / M_PI);
+        }
+
+        gravitySamples_.clear();
+        gravitySamples_.shrink_to_fit();
+        gravityCalibrationDone_.store(true, std::memory_order_release);
+        return true;
     }
 
     sensor_msgs::msg::Imu imuConverter(const sensor_msgs::msg::Imu& imu_in)

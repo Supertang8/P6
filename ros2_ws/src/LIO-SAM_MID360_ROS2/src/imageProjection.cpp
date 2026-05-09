@@ -190,6 +190,13 @@ public:
 
     void imuHandler(const sensor_msgs::msg::Imu::SharedPtr imuMsg)
     {
+        // Until startup gravity calibration completes, feed the raw sample to
+        // the calibrator and drop the message. This avoids queuing IMU data
+        // that was rotated with a stale extRot.
+        if (!collectGravitySample(*imuMsg)) {
+            return;
+        }
+
         sensor_msgs::msg::Imu thisImu = imuConverter(*imuMsg);
 
         std::lock_guard<std::mutex> lock1(imuLock);
@@ -221,6 +228,12 @@ public:
 
     void cloudHandler(const livox_ros_driver2::msg::CustomMsg::SharedPtr laserCloudMsg)
     {
+        // Drop scans until startup gravity calibration is finished — extRot
+        // is needed to rotate the points into the body frame.
+        if (!isGravityCalibrationDone()) {
+            return;
+        }
+
         if (!cachePointCloud(laserCloudMsg))
             return;
 

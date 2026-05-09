@@ -272,6 +272,12 @@ class IMUPreintegration : public ParamServer {
     }
 
     void odometryHandler(const nav_msgs::msg::Odometry::SharedPtr odomMsg) {
+        // Defer until startup gravity calibration is complete (no IMU data
+        // is queued before that, so initialization would fail anyway).
+        if (!isGravityCalibrationDone()) {
+            return;
+        }
+
         std::lock_guard<std::mutex> lock(mtx);
 
         double currentCorrectionTime = stamp2Sec(odomMsg->header.stamp);
@@ -470,6 +476,11 @@ class IMUPreintegration : public ParamServer {
     }
 
     void imuHandler(const sensor_msgs::msg::Imu::SharedPtr imu_raw) {
+        // Hold off on integration until startup gravity calibration completes.
+        if (!collectGravitySample(*imu_raw)) {
+            return;
+        }
+
         std::lock_guard<std::mutex> lock(mtx);
 
         sensor_msgs::msg::Imu thisImu = imuConverter(*imu_raw);
