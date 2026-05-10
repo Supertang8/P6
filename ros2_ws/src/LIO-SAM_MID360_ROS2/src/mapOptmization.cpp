@@ -238,7 +238,7 @@ public:
         srvSaveMap = create_service<lio_sam::srv::SaveMap>("lio_sam/save_map", saveMapService);
         pubHistoryKeyFrames = create_publisher<sensor_msgs::msg::PointCloud2>("lio_sam/mapping/icp_loop_closure_history_cloud", 1);
         pubIcpKeyFrames = create_publisher<sensor_msgs::msg::PointCloud2>("lio_sam/mapping/icp_loop_closure_history_cloud", 1);
-        pubLoopConstraintEdge = create_publisher<visualization_msgs::msg::MarkerArray>("/lio_sam/mapping/loop_closure_constraints", 1);
+        pubLoopConstraintEdge = create_publisher<visualization_msgs::msg::MarkerArray>("lio_sam/mapping/loop_closure_constraints", 1);
 
         pubRecentKeyFrames = create_publisher<sensor_msgs::msg::PointCloud2>("lio_sam/mapping/map_local", 1);
         pubRecentKeyFrame = create_publisher<sensor_msgs::msg::PointCloud2>("lio_sam/mapping/cloud_registered", 1);
@@ -1676,7 +1676,8 @@ public:
         tf2::Stamped<tf2::Transform> temp_odom_to_lidar(t_odom_to_lidar, time_point, odometryFrame);
         geometry_msgs::msg::TransformStamped trans_odom_to_lidar;
         tf2::convert(temp_odom_to_lidar, trans_odom_to_lidar);
-        trans_odom_to_lidar.child_frame_id = "lidar_link";
+        std::string ns = get_namespace();
+        trans_odom_to_lidar.child_frame_id = (ns.empty() || ns == "/") ? "lidar_link" : (ns.substr(1) + "/lidar_link");
         br->sendTransform(trans_odom_to_lidar);
 
         // Publish odometry for ROS (incremental)

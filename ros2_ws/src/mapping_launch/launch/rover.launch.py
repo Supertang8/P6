@@ -159,6 +159,14 @@ def generate_launch_description():
             'use_sim_time': use_sim_time,
         }.items(),
     )
+    rover_lio_sam = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(get_package_share_directory('lio_sam'), 'launch', 'run.launch.py')),
+        launch_arguments={
+            'namespace': 'rover',
+            'rviz': rviz,
+            'use_sim_time': use_sim_time,
+        }.items(),
+    )
 
     rover_odom_2_base_link = Node(
         package='odom_to_tf_ros2',
@@ -264,9 +272,10 @@ def generate_launch_description():
         output='screen',
     )
 
-    # Reads the MultiLiCa result and publishes rover/camera_init → drone/camera_init.
-    # Waits for both robots' fast_lio TFs before publishing, then signals
-    # the aggregators to shut down.
+    # Reads the MultiLiCa result and publishes rover/odom → drone/odom.
+    # Waits for both robots' LIO-SAM odom→livox_frame TFs before publishing,
+    # then signals the aggregators to shut down. The lidar lever-arm is
+    # encoded in the URDF (lidar_joint origin) — no extrinsics needed here.
     camera_init_from_raw_lidar = Node(
         package='mapping_launch',
         executable='camera_init_tf_from_raw_lidar',
@@ -274,12 +283,7 @@ def generate_launch_description():
         parameters=[{
             'parent_namespace': 'rover',
             'child_namespace': 'drone',
-            'odom_topic': 'Odometry',
             'calibration_file': os.path.join(multi_lica_src, 'data', 'calibration_result.txt'),
-            'parent_body_to_lidar_xyz': '-0.011,-0.02329,0.04412',
-            'parent_body_to_lidar_xyzw': '0.0,0.0,0.0,1.0',
-            'child_body_to_lidar_xyz': '-0.011,-0.02329,0.04412',
-            'child_body_to_lidar_xyzw': '0.0,0.0,0.0,1.0',
             'use_sim_time': use_sim_time,
         }],
         output='screen',
@@ -401,25 +405,40 @@ def generate_launch_description():
         declare_use_sim_time_cmd,
 
         # ── static TFs (must be first) ──────────────────────────────────
-        rover_odom_2_camera_init,
-        drone_odom_2_camera_init,
-        rover_odom_2_base_link,
-        static_lidar_frame,
-        static_base_link_frame,
-        static_map_frame,
-        static_odom_frame,
+        #rover_odom_2_camera_init,
+        #drone_odom_2_camera_init,
+        #rover_odom_2_base_link,
+        #static_lidar_frame,
+        #static_base_link_frame,
+        #static_map_frame,
+        #static_odom_frame,
         
 
         # ── rover hardware (livox + aggregator for calibration) ──────────
         merge_map_node,
         map_expander,
-        rover_livox,
-        TimerAction(period=10.0, actions=[rover_aggregator]),
-        TimerAction(period=15.0, actions=[cloud_saver_node]),
-        TimerAction(period=20.0, actions=[multi_lica]),
-        TimerAction(period=30.0, actions=[camera_init_from_raw_lidar]),
-        TimerAction(period=40.0, actions=[rover_fastlio]),
-        TimerAction(period=60.0, actions=[rover_cloud_republisher, drone_cloud_republisher]),
+        #rover_livox,
+        TimerAction(period=1.0, actions=[rover_aggregator]),
+        TimerAction(period=1.0, actions=[cloud_saver_node]),
+        TimerAction(period=2.0, actions=[rover_lio_sam]),
+        
+        RegisterEventHandler(
+            event_handler=OnProcessExit(
+                target_action=cloud_saver_node,
+                on_exit=[multi_lica],
+            )
+        ),
+        RegisterEventHandler(
+            event_handler=OnProcessExit(
+                target_action=multi_lica,
+                on_exit=[camera_init_from_raw_lidar],
+            )
+        ),
+
+        #TimerAction(period=2.0, actions=[multi_lica]),
+        #TimerAction(period=3.0, actions=[camera_init_from_raw_lidar]),
+        #TimerAction(period=40.0, actions=[rover_fastlio]),
+        #TimerAction(period=60.0, actions=[rover_cloud_republisher, drone_cloud_republisher]),
         #TimerAction(period=60.0, actions=[relay_rover_cloud, relay_drone_cloud]),
         #TimerAction(period=70.0, actions=[combined_octomap_node]),
         #TimerAction(period=70.0, actions=[rover_octomap_node]),

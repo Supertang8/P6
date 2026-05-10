@@ -111,19 +111,28 @@ def generate_launch_description():
             'use_sim_time': use_sim_time,
         }.items(),
     )
+    drone_lio_sam = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(get_package_share_directory('lio_sam'), 'launch', 'run.launch.py')),
+        launch_arguments={
+            'namespace': 'drone',
+            'rviz': 'false',
+            'use_sim_time': use_sim_time,
+        }.items(),
+    )
 
 
     return LaunchDescription([
         declare_use_sim_time_cmd,
 
         # Transforms
-        odom_2_camera_init,
-        odom_2_base_link,
+        #odom_2_camera_init,
+        #odom_2_base_link,
 
         # Nodes
-        livox_driver,
-        TimerAction(period=10.0, actions=[aggregator_node]),
-        TimerAction(period=25.0, actions=[fastlio]),
+        #livox_driver,
+        TimerAction(period=1.0, actions=[aggregator_node]),
+        TimerAction(period=1.0, actions=[drone_lio_sam]),
+        #TimerAction(period=25.0, actions=[fastlio]),
         #TimerAction(period=30.0, actions=[drone_cloud_republisher]),
         #TimerAction(period=10.0, actions=[aggregator_node]),
         #fastlio_after_calibration,

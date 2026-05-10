@@ -219,7 +219,7 @@ class IMUPreintegration : public ParamServer {
             std::bind(&IMUPreintegration::odometryHandler, this, std::placeholders::_1), odomOpt);
 
         pubImuOdometry = create_publisher<nav_msgs::msg::Odometry>(odomTopic + "_incremental", qos_imu);
-        pubNavState = create_publisher<autorccar_interfaces::msg::NavState>("/nav_topic", 10);
+        pubNavState = create_publisher<autorccar_interfaces::msg::NavState>("nav_topic", 10);
 
         boost::shared_ptr<gtsam::PreintegrationParams> p = gtsam::PreintegrationParams::MakeSharedU(imuGravity);
         p->accelerometerCovariance =
@@ -387,6 +387,15 @@ class IMUPreintegration : public ParamServer {
                 imuQueOpt.pop_front();
             } else
                 break;
+        }
+        // Skip this correction if essentially no IMU was integrated. Building an
+        // ImuFactor with deltaTij ≈ 0 yields a degenerate measurement covariance and
+        // the Bias BetweenFactor noise collapses to zero, which makes B(key-1)
+        // underconstrained and triggers gtsam's IndeterminantLinearSystemException.
+        // The integrator state is preserved, so the missing IMU data folds into the
+        // next correction.
+        if (imuIntegratorOpt_->deltaTij() < 0.01) {
+            return;
         }
         // add imu factor to graph
         const gtsam::PreintegratedImuMeasurements& preint_imu =
