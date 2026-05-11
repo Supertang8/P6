@@ -129,9 +129,9 @@ def generate_launch_description():
         #odom_2_base_link,
 
         # Nodes
-        #livox_driver,
-        TimerAction(period=1.0, actions=[aggregator_node]),
-        TimerAction(period=1.0, actions=[drone_lio_sam]),
+        livox_driver,
+        TimerAction(period=10.0, actions=[aggregator_node]),
+        TimerAction(period=20.0, actions=[drone_lio_sam]),
         #TimerAction(period=25.0, actions=[fastlio]),
         #TimerAction(period=30.0, actions=[drone_cloud_republisher]),
         #TimerAction(period=10.0, actions=[aggregator_node]),

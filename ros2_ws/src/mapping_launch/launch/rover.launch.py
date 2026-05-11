@@ -426,10 +426,10 @@ def generate_launch_description():
         # ── rover hardware (livox + aggregator for calibration) ──────────
         merge_map_node,
         map_expander,
-        #rover_livox,
-        TimerAction(period=1.0, actions=[rover_aggregator]),
-        TimerAction(period=1.0, actions=[cloud_saver_node]),
-        TimerAction(period=2.0, actions=[rover_lio_sam]),
+        rover_livox,
+        TimerAction(period=10.0, actions=[rover_aggregator]),
+        TimerAction(period=10.0, actions=[cloud_saver_node]),
+        TimerAction(period=20.0, actions=[rover_lio_sam]),
         
         RegisterEventHandler(
             event_handler=OnProcessExit(
@@ -450,8 +450,8 @@ def generate_launch_description():
         #TimerAction(period=60.0, actions=[rover_cloud_republisher, drone_cloud_republisher]),
         #TimerAction(period=60.0, actions=[relay_rover_cloud, relay_drone_cloud]),
         #TimerAction(period=70.0, actions=[combined_octomap_node]),
-        TimerAction(period=10.0, actions=[rover_octomap_node]),
-        TimerAction(period=12.0, actions=[drone_octomap_node]),
+        TimerAction(period=30.0, actions=[rover_octomap_node]),
+        TimerAction(period=35.0, actions=[drone_octomap_node]),
         #TimerAction(period=70.0, actions=[nav2_node]),
 
         #TimerAction(period=60.0, actions=[relay_rover_cloud, relay_drone_cloud, combined_octomap_node]),
