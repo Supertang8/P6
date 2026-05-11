@@ -109,8 +109,8 @@ def generate_launch_description():
         arguments=[
             '--x', '-0.1', '--y', '0', '--z', '-0.26',
             '--qx', '0.0', '--qy', '0.0', '--qz', '0.0', '--qw', '1.0',
-            '--frame-id', 'livox',
-            '--child-frame-id', 'base_footprint',
+            '--frame-id', 'rover/base_link',
+            '--child-frame-id', 'base_link',
         ],
         parameters=[{'use_sim_time': use_sim_time}],
     )
@@ -123,7 +123,7 @@ def generate_launch_description():
             '--x', '0', '--y', '0', '--z', '0',
             '--qx', '0.0', '--qy', '0.0', '--qz', '0.0', '--qw', '1.0',
             '--frame-id', 'map',
-            '--child-frame-id', 'rover/camera_init',
+            '--child-frame-id', 'rover/map',
         ],
         parameters=[{'use_sim_time': use_sim_time}],
     )
@@ -135,7 +135,7 @@ def generate_launch_description():
         arguments=[
             '--x', '0', '--y', '0', '--z', '0',
             '--qx', '0.0', '--qy', '0.0', '--qz', '0.0', '--qw', '1.0',
-            '--frame-id', 'rover/camera_init',
+            '--frame-id', 'rover/odom',
             '--child-frame-id', 'odom',
         ],
         parameters=[{'use_sim_time': use_sim_time}],
@@ -418,9 +418,9 @@ def generate_launch_description():
         #drone_odom_2_camera_init,
         #rover_odom_2_base_link,
         #static_lidar_frame,
-        #static_base_link_frame,
-        #static_map_frame,
-        #static_odom_frame,
+        static_base_link_frame,
+        static_map_frame,
+        static_odom_frame,
         
 
         # ── rover hardware (livox + aggregator for calibration) ──────────

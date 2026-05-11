@@ -13,6 +13,12 @@
 #include <gtsam/slam/PriorFactor.h>
 #include <gtsam_unstable/nonlinear/IncrementalFixedLagSmoother.h>
 
+#include <execinfo.h>
+#include <unistd.h>
+#include <typeinfo>
+#include <exception>
+#include <cstdio>
+
 #include "autorccar_interfaces/msg/nav_state.hpp"
 #include "utility.hpp"
 
@@ -97,6 +103,14 @@ class TransformFusion : public ParamServer {
             else
                 break;
         }
+        // If the newest IMU-odom stamp is <= lidarOdomTime, the pop loop above
+        // drains the queue. Calling .front()/.back() on an empty std::deque is
+        // UB: the underlying storage still exists but the Odometry destructors
+        // have run, leaving header.frame_id / child_frame_id std::strings with
+        // null internal pointers. The pass-by-value copy in odom2affine() (or
+        // the copy on line below for laserOdometry) then throws
+        // `basic_string::_M_construct null not valid` and aborts the node.
+        if (imuOdomQueue.empty()) return;
         Eigen::Isometry3d imuOdomAffineFront = odom2affine(imuOdomQueue.front());
         Eigen::Isometry3d imuOdomAffineBack = odom2affine(imuOdomQueue.back());
         Eigen::Isometry3d imuOdomAffineIncre = imuOdomAffineFront.inverse() * imuOdomAffineBack;
@@ -559,7 +573,30 @@ class IMUPreintegration : public ParamServer {
     }
 };
 
+// Debug terminate handler: prints exception type + what() + a native backtrace
+// so we can localize a crash like `basic_string::_M_construct null not valid`
+// that has no visible call site otherwise.
+static void debug_terminate() {
+    std::fprintf(stderr, "===== terminate handler =====\n");
+    try {
+        if (auto eptr = std::current_exception()) std::rethrow_exception(eptr);
+        std::fprintf(stderr, "terminate with no active exception\n");
+    } catch (const std::exception& e) {
+        std::fprintf(stderr, "type: %s\nwhat: %s\n", typeid(e).name(), e.what());
+    } catch (...) {
+        std::fprintf(stderr, "unknown non-std exception\n");
+    }
+    void* frames[64];
+    int n = ::backtrace(frames, 64);
+    std::fprintf(stderr, "----- backtrace (%d frames) -----\n", n);
+    ::backtrace_symbols_fd(frames, n, STDERR_FILENO);
+    std::fprintf(stderr, "===== end =====\n");
+    std::fflush(stderr);
+    std::abort();
+}
+
 int main(int argc, char** argv) {
+    std::set_terminate(debug_terminate);
     rclcpp::init(argc, argv);
 
     rclcpp::NodeOptions options;

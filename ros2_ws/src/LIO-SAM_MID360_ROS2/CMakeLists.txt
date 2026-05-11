@@ -54,6 +54,9 @@ target_link_libraries(${PROJECT_NAME}_imageProjection "${cpp_typesupport_target}
 add_executable(${PROJECT_NAME}_imuPreintegration src/imuPreintegration.cpp)
 ament_target_dependencies(${PROJECT_NAME}_imuPreintegration rclcpp rclpy std_msgs sensor_msgs geometry_msgs nav_msgs pcl_conversions pcl_msgs visualization_msgs tf2 tf2_ros tf2_eigen tf2_sensor_msgs tf2_geometry_msgs OpenCV PCL GTSAM Eigen autorccar_interfaces livox_ros_driver2)
 target_link_libraries(${PROJECT_NAME}_imuPreintegration gtsam "${cpp_typesupport_target}")
+# Debug: keep symbols + export dynamic so backtrace_symbols_fd can name frames
+target_compile_options(${PROJECT_NAME}_imuPreintegration PRIVATE -g)
+target_link_options(${PROJECT_NAME}_imuPreintegration PRIVATE -rdynamic)
 
 add_executable(${PROJECT_NAME}_mapOptimization src/mapOptmization.cpp)
 ament_target_dependencies(${PROJECT_NAME}_mapOptimization rclcpp rclpy std_msgs sensor_msgs geometry_msgs nav_msgs pcl_conversions pcl_msgs visualization_msgs tf2 tf2_ros tf2_eigen tf2_sensor_msgs tf2_geometry_msgs OpenCV PCL GTSAM livox_ros_driver2)
