@@ -70,6 +70,12 @@ public:
     rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubRecentKeyFrames;
     rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubRecentKeyFrame;
     rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubCloudRegisteredRaw;
+    // Lidar-frame deskewed cloud, republished at the mapping rate and tagged
+    // with the mapping-pose TF child frame (<ns>/lidar_link). Intended for
+    // octomap_server: every cloud here is in lockstep with the <ns>/odom ->
+    // <ns>/lidar_link TF broadcast in publishOdometry(), so the stamp-matched
+    // TF lookup never has to interpolate between mapped scans.
+    rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubCloudDeskewedSync;
     rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pubLoopConstraintEdge;
 
     rclcpp::Service<lio_sam::srv::SaveMap>::SharedPtr srvSaveMap;
@@ -243,6 +249,7 @@ public:
         pubRecentKeyFrames = create_publisher<sensor_msgs::msg::PointCloud2>("lio_sam/mapping/map_local", 1);
         pubRecentKeyFrame = create_publisher<sensor_msgs::msg::PointCloud2>("lio_sam/mapping/cloud_registered", 1);
         pubCloudRegisteredRaw = create_publisher<sensor_msgs::msg::PointCloud2>("lio_sam/mapping/cloud_registered_raw", 1);
+        pubCloudDeskewedSync = create_publisher<sensor_msgs::msg::PointCloud2>("lio_sam/mapping/cloud_deskewed_sync", 1);
 
         downSizeFilterCorner.setLeafSize(mappingCornerLeafSize, mappingCornerLeafSize, mappingCornerLeafSize);
         downSizeFilterSurf.setLeafSize(mappingSurfLeafSize, mappingSurfLeafSize, mappingSurfLeafSize);
@@ -1760,6 +1767,19 @@ public:
             PointTypePose thisPose6D = trans2PointTypePose(transformTobeMapped);
             *cloudOut = *transformPointCloud(cloudOut,  &thisPose6D);
             publishCloud(pubCloudRegisteredRaw, cloudOut, timeLaserInfoStamp, odometryFrame);
+        }
+        // publish lidar-frame deskewed cloud at mapping rate, tagged with
+        // <ns>/lidar_link so octomap's stamp-matched TF lookup always finds
+        // the exact mapping pose for this scan (no interpolation between
+        // mapping iterations).
+        if (pubCloudDeskewedSync->get_subscription_count() != 0)
+        {
+            pcl::PointCloud<PointType>::Ptr cloudOut(new pcl::PointCloud<PointType>());
+            pcl::fromROSMsg(cloudInfo.cloud_deskewed, *cloudOut);
+            const std::string ns = std::string(get_namespace());
+            const std::string deskewedFrame =
+                (ns.empty() || ns == "/") ? "lidar_link" : (ns.substr(1) + "/lidar_link");
+            publishCloud(pubCloudDeskewedSync, cloudOut, timeLaserInfoStamp, deskewedFrame);
         }
         // publish path
         if (pubPath->get_subscription_count() != 0)

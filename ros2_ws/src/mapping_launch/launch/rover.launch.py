@@ -302,7 +302,7 @@ def generate_launch_description():
         namespace='rover',
         output='screen',
         parameters=[{
-            'frame_id': 'rover/camera_init',
+            'frame_id': 'rover/odom',
             'resolution': 0.2,
             'base_frame_id': 'rover/base_link',
             'filter_speckles': True,
@@ -316,7 +316,7 @@ def generate_launch_description():
             'use_sim_time': use_sim_time,
         }],
         remappings=[
-            ('cloud_in', 'cloud_registered_world_aligned'),
+            ('cloud_in', 'lio_sam/mapping/cloud_deskewed_sync'),
             ('/projected_map', 'map'),
             ('/octomap_binary', 'octomap_binary'),
             ('/octomap_full', 'octomap_full'),
@@ -336,7 +336,7 @@ def generate_launch_description():
         namespace='drone',
         output='screen',
         parameters=[{
-            'frame_id': 'rover/camera_init',
+            'frame_id': 'rover/odom',
             'resolution': 0.2,
             'base_frame_id': 'drone/base_link',
             'filter_speckles': True,
@@ -345,12 +345,21 @@ def generate_launch_description():
             'ground_filter.distance': 0.1,
             'ground_filter.plane_distance': 1.0,
             'sensor_model.max_range': 8.0,
-            'point_cloud_max_z': 1.0,
-            'point_cloud_min_z': -0.3,
+            # Octree ingests everything (lets ray-casting carve free space
+            # under the drone regardless of altitude). The 2D projection is
+            # sliced at publish time via occupancy_min/max_z below.
+            'point_cloud_min_z': -100.0,
+            'point_cloud_max_z': 100.0,
+            # World-frame slice for projected_map. World z=0 ≈ rover lidar
+            # start (~0.26 m above floor), so the floor lives near z=-0.26.
+            # occupancy_min_z=-0.1 skips the floor band; occupancy_max_z=1.5
+            # keeps the projection at nav-relevant heights.
+            'occupancy_min_z': -0.01,
+            'occupancy_max_z': 1.5,
             'use_sim_time': use_sim_time,
         }],
         remappings=[
-            ('cloud_in', 'cloud_registered_world_aligned'),
+            ('cloud_in', 'lio_sam/mapping/cloud_deskewed_sync'),
             ('/projected_map', 'map'),
             ('/octomap_binary', 'octomap_binary'),
             ('/octomap_full', 'octomap_full'),
@@ -441,8 +450,8 @@ def generate_launch_description():
         #TimerAction(period=60.0, actions=[rover_cloud_republisher, drone_cloud_republisher]),
         #TimerAction(period=60.0, actions=[relay_rover_cloud, relay_drone_cloud]),
         #TimerAction(period=70.0, actions=[combined_octomap_node]),
-        #TimerAction(period=70.0, actions=[rover_octomap_node]),
-        #TimerAction(period=80.0, actions=[drone_octomap_node]),
+        TimerAction(period=10.0, actions=[rover_octomap_node]),
+        TimerAction(period=12.0, actions=[drone_octomap_node]),
         #TimerAction(period=70.0, actions=[nav2_node]),
 
         #TimerAction(period=60.0, actions=[relay_rover_cloud, relay_drone_cloud, combined_octomap_node]),
