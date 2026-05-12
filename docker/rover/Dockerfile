@@ -34,6 +34,7 @@ RUN apt update && \
         ros-humble-perception-pcl \
         ros-humble-vision-opencv \
         ros-humble-xacro \
+        libfreeimage-dev \
         libgtsam-dev libgtsam-unstable-dev \
     && rm -rf /var/lib/apt/lists/*
 
@@ -88,12 +89,12 @@ RUN git clone https://github.com/Livox-SDK/Livox-SDK2.git && \
     ldconfig
 
 
-COPY docker/rover/entrypoint.sh /root/entrypoint.sh
-RUN chmod +x /root/entrypoint.sh
+#COPY docker/rover/entrypoint.sh /root/entrypoint.sh
+#RUN chmod +x /root/entrypoint.sh
 
 WORKDIR /root/ros2_ws
 
-ENTRYPOINT ["/root/entrypoint.sh"]
+#ENTRYPOINT ["/root/entrypoint.sh"]
 
 #CMD ["bash"]
 
