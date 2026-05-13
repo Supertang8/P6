@@ -5,6 +5,7 @@ RUN apt update && \
     # apt upgrade -y && \
     apt install -y software-properties-common && \
     add-apt-repository universe && \
+    add-apt-repository ppa:borglab/gtsam-release-4.1 && \
     apt install -y \
     	python3-colcon-common-extensions \
     	python3-rosdep \
@@ -28,6 +29,10 @@ RUN apt update && \
         ros-humble-teleop-twist-keyboard \
         ros-humble-bondcpp \
         ros-humble-test-msgs \
+        ros-humble-perception-pcl \
+        ros-humble-vision-opencv \
+        ros-humble-xacro \
+        libgtsam-dev libgtsam-unstable-dev \
     	ros-humble-pcl-conversions ros-humble-pcl-msgs ros-humble-pcl-ros
  
 #Mavlink communcation
@@ -55,7 +60,7 @@ RUN rosdep update
 # Auto-source ROS
 RUN echo "source /opt/ros/humble/setup.bash" >> /root/.bashrc
 RUN echo "source /root/ros2_ws/install/setup.bash" >> /root/.bashrc 
-RUN echo "alias cb='colcon build --packages-select livox_converter calibrate_lidars odom_to_tf_ros2 mapping_launch livox_ros_driver2 px4_msgs px4_ros2_cpp px4_controller drone_controller system_package fast_lio'" >> /root/.bashrc 
+RUN echo "alias cb='colcon build --packages-select livox_converter calibrate_lidars odom_to_tf_ros2 mapping_launch livox_ros_driver2 px4_msgs px4_ros2_cpp px4_controller drone_controller system_package fast_lio autorccar_interfaces lio_sam'" >> /root/.bashrc 
 
 
 # Install Livox SDK

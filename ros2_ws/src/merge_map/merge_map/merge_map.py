@@ -6,10 +6,68 @@ from rclpy.node import Node
 from nav_msgs.msg import OccupancyGrid
 import numpy as np
 
+def resample_map(src_map, target_resolution):
+    """Resample a map to a target resolution using nearest-neighbor interpolation."""
+    src_res = src_map.info.resolution
+    src_w = src_map.info.width
+    src_h = src_map.info.height
+    src_ox = src_map.info.origin.position.x
+    src_oy = src_map.info.origin.position.y
+    
+    if target_resolution <= 0.0:
+        raise ValueError('Target resolution must be > 0')
+    
+    # Compute bounds
+    src_x_max = src_ox + src_w * src_res
+    src_y_max = src_oy + src_h * src_res
+    
+    # Output dimensions at target resolution
+    out_w = int(np.ceil((src_x_max - src_ox) / target_resolution))
+    out_h = int(np.ceil((src_y_max - src_oy) / target_resolution))
+    
+    # Resample using nearest-neighbor
+    resampled_data = []
+    for out_y in range(out_h):
+        world_y = src_oy + out_y * target_resolution
+        src_y = int(np.floor((world_y - src_oy) / src_res))
+        if src_y < 0 or src_y >= src_h:
+            resampled_data.extend([-1] * out_w)
+            continue
+        
+        for out_x in range(out_w):
+            world_x = src_ox + out_x * target_resolution
+            src_x = int(np.floor((world_x - src_ox) / src_res))
+            if src_x < 0 or src_x >= src_w:
+                resampled_data.append(-1)
+            else:
+                resampled_data.append(src_map.data[src_y * src_w + src_x])
+    
+    resampled_map = OccupancyGrid()
+    resampled_map.header = src_map.header
+    resampled_map.info.resolution = target_resolution
+    resampled_map.info.width = out_w
+    resampled_map.info.height = out_h
+    resampled_map.info.origin.position.x = src_ox
+    resampled_map.info.origin.position.y = src_oy
+    resampled_map.info.origin.position.z = src_map.info.origin.position.z
+    resampled_map.info.origin.orientation = src_map.info.origin.orientation
+    resampled_map.data = resampled_data
+    return resampled_map
+
 def merge_maps(map1, map2):
     merged_map = OccupancyGrid()
     merged_map.header = map1.header
     merged_map.header.frame_id = map1.header.frame_id or map2.header.frame_id
+    
+    # Determine target resolution (finer of the two)
+    target_resolution = min(map1.info.resolution, map2.info.resolution)
+    
+    # Resample both maps to target resolution if needed
+    if map1.info.resolution != target_resolution:
+        map1 = resample_map(map1, target_resolution)
+    if map2.info.resolution != target_resolution:
+        map2 = resample_map(map2, target_resolution)
+    
     min_x = min(map1.info.origin.position.x, map2.info.origin.position.x)
     min_y = min(map1.info.origin.position.y, map2.info.origin.position.y)
     max_x = max(map1.info.origin.position.x + (map1.info.width * map1.info.resolution),
@@ -18,7 +76,7 @@ def merge_maps(map1, map2):
                 map2.info.origin.position.y + (map2.info.height * map2.info.resolution))
     merged_map.info.origin.position.x = min_x
     merged_map.info.origin.position.y = min_y
-    merged_map.info.resolution = min(map1.info.resolution, map2.info.resolution)
+    merged_map.info.resolution = target_resolution
     if merged_map.info.resolution <= 0.0:
         raise ValueError('Map resolution must be > 0')
 
@@ -83,11 +141,6 @@ class MergeMapNode(Node):
             self.map1 = msg
             self.get_logger().debug('Received map1')
             if self.map2 is not None:
-                if self.map1.header.frame_id != self.map2.header.frame_id:
-                    self.get_logger().warn(
-                        f'Input frame mismatch: map1={self.map1.header.frame_id}, '
-                        f'map2={self.map2.header.frame_id}'
-                    )
                 msg = merge_maps(self.map1, self.map2)
                 self.publisher.publish(msg)
         except Exception as exc:
@@ -98,11 +151,6 @@ class MergeMapNode(Node):
             self.map2 = msg
             self.get_logger().debug('Received map2')
             if self.map1 is not None:
-                if self.map1.header.frame_id != self.map2.header.frame_id:
-                    self.get_logger().warn(
-                        f'Input frame mismatch: map1={self.map1.header.frame_id}, '
-                        f'map2={self.map2.header.frame_id}'
-                    )
                 msg = merge_maps(self.map1, self.map2)
                 self.publisher.publish(msg)
         except Exception as exc:

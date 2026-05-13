@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+<robot name="lio" xmlns:xacro="http://tixiaoshan.github.io/">
+  <xacro:property name="PI" value="3.1415926535897931" />
+  
+  <!-- Namespace for frame names (default to empty string) -->
+  <xacro:arg name="namespace" default="" />
+  <!-- Create frame prefix with trailing slash if namespace is not empty -->
+  <xacro:property name="namespace_val" value="$(arg namespace)" />
+  <xacro:property name="frame_prefix" value="${namespace_val + '/' if namespace_val else ''}" />
+
+  <link name="${frame_prefix}chassis_link"></link>
+
+  <link name="${frame_prefix}base_link"></link>
+  <joint name="base_link_joint" type="fixed">
+    <parent link="${frame_prefix}base_link"/>
+    <child link="${frame_prefix}chassis_link" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+
+  <link name="${frame_prefix}livox_frame"> </link>
+  <joint name="lidar_joint" type="fixed">
+    <parent link="${frame_prefix}base_link" />
+    <child link="${frame_prefix}livox_frame" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+
+  <link name="${frame_prefix}imu_link"> </link>
+  <joint name="imu_joint" type="fixed">
+    <parent link="${frame_prefix}chassis_link" />
+    <child link="${frame_prefix}imu_link" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+
+  <link name="${frame_prefix}laser_sensor_frame"> </link>
+  <joint name="laser_joint" type="fixed">
+    <parent link="${frame_prefix}imu_link" />
+    <child link="${frame_prefix}laser_sensor_frame" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+
+  <link name="${frame_prefix}navsat_link"> </link>
+  <joint name="navsat_joint" type="fixed">
+    <parent link="${frame_prefix}chassis_link" />
+    <child link="${frame_prefix}navsat_link" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+
+</robot>

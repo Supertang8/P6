@@ -102,6 +102,7 @@ private:
   rclcpp::Subscription<std_msgs::msg::Empty>::SharedPtr sub_shutdown_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_aggregated_;
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr srv_trigger_;
+  rclcpp::TimerBase::SharedPtr shutdown_timer_;
 
   std::atomic<bool> lidar_online_;
   bool collecting_ = false;
@@ -201,6 +202,12 @@ private:
       min_dist_,
       max_dist_,
       downsampled.size());
+
+    // Delay shutdown so gather_aggregated_clouds has time to receive and save
+    // the cloud over the network before this node's transient_local publisher dies.
+    shutdown_timer_ = this->create_wall_timer(
+      std::chrono::seconds(3),
+      [this]() { rclcpp::shutdown(); });
   }
 };
 
