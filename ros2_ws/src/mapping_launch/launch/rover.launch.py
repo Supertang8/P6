@@ -31,12 +31,7 @@ def generate_launch_description():
         raise RuntimeError(
             f'Could not locate Multi_LiCa directory, tried: {multi_lica_src_candidates}')
     calibration_files_dir = os.path.join(multi_lica_src, 'data', 'drone_to_rover_calibration')
-
-    #nav2_pkg = get_package_share_directory('nav2_bringup')
-    #nav2_launch = os.path.join(nav2_pkg, 'launch', 'navigation_launch.py')
-    #nav2_params = os.path.join(
-    #    get_package_share_directory('mapping_launch'), 'config', 'nav2_params.yaml')
-
+    
     nav2_launch = os.path.join(
         get_package_share_directory('nav2_bringup'), 'launch', 'navigation_launch.py')
     nav2_params = os.path.expanduser(
@@ -66,7 +61,7 @@ def generate_launch_description():
             '--x', '0.1', '--y', '0', '--z', '-0.26',
             '--qx', '0.0', '--qy', '0.0', '--qz', '1.0', '--qw', '0.0',
             '--frame-id', 'rover/base_link',
-            '--child-frame-id', 'base_link',
+            '--child-frame-id', 'base_footprint',
         ],
         parameters=[{'use_sim_time': use_sim_time}],
     )
@@ -98,7 +93,7 @@ def generate_launch_description():
     )
 
     # ═══════════════════════════════════════════════════════════════════════
-    # 2. ROVER HARDWARE  – livox only; fast_lio starts after calibration
+    # 2. ROVER HARDWARE  – livox only; lio_sam starts after calibration
     # ═══════════════════════════════════════════════════════════════════════
 
     # Livox MID360 driver for the rover
@@ -115,21 +110,30 @@ def generate_launch_description():
         }.items(),
     )
 
-    rover_odom_2_base_link = Node(
+    # Virtual gravity-aligned base frame for the drone octomap's
+    # filter_ground_plane. The drone banks/pitches in flight and varies in
+    # altitude, so drone/base_link (lidar pose) is neither gravity-aligned
+    # nor close to the floor. LIO-SAM's drone/odom is gravity-calibrated at
+    # startup, so a yaw-only TF off drone/odom gives a base frame whose Z
+    # axis matches gravity and whose origin sits at z=0 in drone/odom (≈
+    # ground at takeoff). Floor's z in this frame stays within
+    # ground_filter.plane_distance of zero. New frame name avoids colliding
+    # with LIO-SAM imuPreintegration's drone/odom -> drone/base_link TF.
+    drone_base_footprint = Node(
         package='odom_to_tf_ros2',
         executable='odom_to_tf',
-        namespace='rover',
+        namespace='drone',
         output='screen',
         parameters=[{
-            'odom_topic': 'Odometry',
-            'frame_id': 'rover/odom',
-            'child_frame_id': 'rover/base_link',
+            'odom_topic': 'lio_sam/mapping/odometry',
+            'frame_id': 'drone/odom',
+            'child_frame_id': 'drone/base_footprint',
             'use_yaw_only': True,
             'use_sim_time': use_sim_time,
         }],
     )
 
-
+    # Aggregates rover's raw pointclouds into one for calibration
     rover_aggregator = Node(
         package='calibrate_lidars',
         executable='pointcloud_aggregator_node',
@@ -155,6 +159,7 @@ def generate_launch_description():
     #    gather_aggregated_clouds → MultiLiCa → camera_init_tf
     # ═══════════════════════════════════════════════════════════════════════
 
+    # Collects aggregated clouds and saves as .pcd files for Multi_LiCa
     cloud_saver_node = Node(
         package='calibrate_lidars',
         executable='gather_aggregated_clouds',
@@ -176,6 +181,7 @@ def generate_launch_description():
     multi_lica_output_dir = os.path.join(
         get_package_share_directory('multi_lidar_calibrator'), 'output')
 
+    # Finds transfomation between drone and rover lidar
     multi_lica = Node(
         package='multi_lidar_calibrator',
         executable='multi_lidar_calibrator',
@@ -188,7 +194,7 @@ def generate_launch_description():
     # Reads the MultiLiCa result and publishes rover/odom → drone/odom.
     # Waits for both robots' LIO-SAM odom→livox_frame TFs before publishing,
     # then signals the aggregators to shut down. The lidar lever-arm is
-    # encoded in the URDF (lidar_joint origin) — no extrinsics needed here.
+    # encoded in the URDF (lidar_joint origin).
     drone_to_rover_transform = Node(
         package='mapping_launch',
         executable='camera_init_tf_from_raw_lidar',
@@ -207,7 +213,7 @@ def generate_launch_description():
     # ═══════════════════════════════════════════════════════════════════════
 
     # Rover octomap starts after calibration (MultiLiCa exits), together
-    # with rover fast_lio whose data it consumes.
+    # with rover LIO-SAM whose data it consumes.
     rover_octomap_node = Node(
         package='octomap_server',
         executable='octomap_server_node',
@@ -217,15 +223,21 @@ def generate_launch_description():
         parameters=[{
             'frame_id': 'rover/map',
             'resolution': 0.2,
+            # rover/base_link is fine here: rover stays near horizontal so
+            # base_link is ≈ gravity-aligned (within ground_filter.angle),
+            # and the lidar's fixed mount keeps the floor at a constant
+            # z ≈ -0.26 in base_link regardless of slope.
             'base_frame_id': 'rover/base_link',
             'filter_speckles': True,
-            'filter_ground_plane': False,
+            'filter_ground_plane': True,
             'ground_filter.angle': 0.3,
             'ground_filter.distance': 0.1,
             'ground_filter.plane_distance': 1.0,
             'sensor_model.max_range': 8.0,
+            # Bounds in base_link. Floor is near z=-0.26; cap at ~1 m above
+            # the lidar for nav-relevant obstacles.
+            'point_cloud_min_z': -0.5,
             'point_cloud_max_z': 1.0,
-            'point_cloud_min_z': -0.1,
             'use_sim_time': use_sim_time,
         }],
         remappings=[
@@ -239,9 +251,6 @@ def generate_launch_description():
         ],
     )
 
-    # Drone octomap and camera_init_tf both start after MultiLiCa exits.
-    # The octomap will wait for the inter-robot TF that camera_init_tf
-    # publishes once the drone's fast_lio TF becomes available.
     drone_octomap_node = Node(
         package='octomap_server',
         executable='octomap_server_node',
@@ -251,24 +260,19 @@ def generate_launch_description():
         parameters=[{
             'frame_id': 'rover/map',
             'resolution': 0.4,
-            'base_frame_id': 'drone/base_link',
+            # Gravity-aligned virtual base; with use_yaw_only it sits at
+            # z=0 in drone/odom (≈ ground level since drone takes off there).
+            'base_frame_id': 'drone/base_footprint',
             'filter_speckles': True,
-            'filter_ground_plane': False,
+            'filter_ground_plane': True,
             'ground_filter.angle': 0.3,
             'ground_filter.distance': 0.1,
             'ground_filter.plane_distance': 1.0,
             'sensor_model.max_range': 8.0,
-            # Octree ingests everything (lets ray-casting carve free space
-            # under the drone regardless of altitude). The 2D projection is
-            # sliced at publish time via occupancy_min/max_z below.
-            'point_cloud_min_z': -100.0,
-            'point_cloud_max_z': 100.0,
-            # World-frame slice for projected_map. World z=0 ≈ rover lidar
-            # start (~0.26 m above floor), so the floor lives near z=-0.26.
-            # occupancy_min_z=-0.1 skips the floor band; occupancy_max_z=1.5
-            # keeps the projection at nav-relevant heights.
-            'occupancy_min_z': -0.01,
-            'occupancy_max_z': 1.5,
+            # Bounds are in base_footprint. min_z keeps the floor band so the
+            # ground filter can see it; max_z caps to nav-relevant heights.
+            'point_cloud_min_z': -1.0,
+            'point_cloud_max_z': 1.5,
             'use_sim_time': use_sim_time,
         }],
         remappings=[
@@ -354,6 +358,6 @@ def generate_launch_description():
 
         TimerAction(period=20.0, actions=[rover_lio_sam]),
         TimerAction(period=40.0, actions=[rover_octomap_node]),
-        TimerAction(period=45.0, actions=[drone_octomap_node]),
+        TimerAction(period=45.0, actions=[drone_octomap_node, drone_base_footprint]),
         #TimerAction(period=70.0, actions=[nav2_node]),
     ])
