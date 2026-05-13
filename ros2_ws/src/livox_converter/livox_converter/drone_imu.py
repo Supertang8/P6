@@ -2,6 +2,7 @@ import rclpy
 from rclpy.node import Node
 
 from sensor_msgs.msg import Imu
+from px4_msgs.msg import SensorCombined
 from livox_ros_driver2.msg import CustomMsg
 
 
@@ -10,14 +11,14 @@ class PC2ToLivox(Node):
     def __init__(self):
         super().__init__('pc2_to_livox')
 
-        # Ilidanitialize timing variables
+        # Initialize timing variables
         self.last_lidar_stamp = None
         self.last_lidar_arrival_time = None
 
         # Relative topic names
         self.imu_sub = self.create_subscription(
-            Imu,
-            'imu/data_raw',
+            SensorCombined,
+            '/fmu/out/sensor_combined',
             self.imu_callback,
             10
         )
@@ -46,12 +47,24 @@ class PC2ToLivox(Node):
 
         # New timestamp = lidar stamp + dt
         new_stamp = self.last_lidar_stamp + dt
+        imu_msg = Imu()
 
-        imu_msg = msg
         imu_msg.header.stamp = new_stamp.to_msg()
+        imu_msg.header.frame_id = "drone/base_link"
+
+        # PX4 SensorCombined values
+        # gyro_rad[0:3]
+        imu_msg.angular_velocity.x = float(msg.gyro_rad[0])
+        imu_msg.angular_velocity.y = float(msg.gyro_rad[1])
+        imu_msg.angular_velocity.z = float(msg.gyro_rad[2])
+
+        # accelerometer_m_s2[0:3]
+        imu_msg.linear_acceleration.x = float(msg.accelerometer_m_s2[0])
+        imu_msg.linear_acceleration.y = float(msg.accelerometer_m_s2[1])
+        imu_msg.linear_acceleration.z = float(msg.accelerometer_m_s2[2])
 
         self.imu_pub.publish(imu_msg)
-
+        
     def lidar_callback(self, msg):
         self.last_lidar_stamp = rclpy.time.Time.from_msg(msg.header.stamp)
         self.last_lidar_arrival_time = self.get_clock().now()

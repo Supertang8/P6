@@ -28,8 +28,10 @@ from launch.actions import DeclareLaunchArgument
 from launch.actions import IncludeLaunchDescription
 from launch.actions import TimerAction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, TextSubstitution
+from launch.substitutions import LaunchConfiguration, TextSubstitution, PathJoinSubstitution
+
 from launch_ros.actions import Node
+
 
 
 def generate_launch_description():
@@ -40,7 +42,7 @@ def generate_launch_description():
 
     sim_world = DeclareLaunchArgument(
         "sim_world",
-        default_value=os.path.join(pkg_project_worlds, "worlds", "leo_p6.sdf"),
+        default_value="leo_p6",
         description="Path to the Gazebo world file",
     )
 
@@ -50,13 +52,19 @@ def generate_launch_description():
         description="Robot namespace",
     )
 
+    world_path = PathJoinSubstitution([
+        pkg_project_worlds,
+        "worlds",
+        [LaunchConfiguration("sim_world"), TextSubstitution(text=".sdf")],
+    ])
+
     # Setup to launch the simulator and Gazebo world
     gz_sim = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(pkg_ros_gz_sim, "launch", "gz_sim.launch.py")
         ),
         launch_arguments={
-            "gz_args": [LaunchConfiguration("sim_world"), " -r"],
+            "gz_args": [world_path, " -r"],
         }.items(),
     )
 
@@ -80,7 +88,6 @@ def generate_launch_description():
         name="clock_bridge",
         arguments=[
             "/clock@rosgraph_msgs/msg/Clock[ignition.msgs.Clock",
-            "/drone_lidar/points@sensor_msgs/msg/PointCloud2[ignition.msgs.PointCloudPacked",
         ],
         parameters=[
             {
@@ -98,6 +105,7 @@ def generate_launch_description():
                 package="livox_converter",
                 executable="pc2_to_livox",
                 name="pc2_to_livox",
+                namespace=LaunchConfiguration("robot_ns"),
                 output="screen",
                 parameters=[{'use_sim_time': True}],
             )
@@ -111,6 +119,7 @@ def generate_launch_description():
                 package="livox_converter",
                 executable="livox_imu",
                 name="livox_imu",
+                namespace=LaunchConfiguration("robot_ns"),
                 output="screen",
                 parameters=[{'use_sim_time': True}],
             )

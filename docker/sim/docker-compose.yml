@@ -17,3 +17,5 @@ services:
     tty: true
     devices:
       - "/dev/serial0:/dev/serial0"
+      - "/dev/ttyAMA0:/dev/ttyAMA0"
+      - "/dev/ttyACM0:/dev/ttyACM0"

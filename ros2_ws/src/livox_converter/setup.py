@@ -28,6 +28,7 @@ setup(
             'livox_imu = livox_converter.livox_imu:main',
             'octomap_converter = livox_converter.octomap_converter:main',
             'map_expander = livox_converter.map_expander:main',
+            'drone_imu = livox_converter.drone_imu:main',
         ],
     },
 )

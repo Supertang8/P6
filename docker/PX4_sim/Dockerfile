@@ -16,8 +16,8 @@ RUN apt update && \
  
 #Mavlink communcation
 RUN apt install -y python3-pip  && \
-    pip3 install future  && \ 
-    pip3 install mavproxy  && \ 
+    pip3 install future  && \
+    pip3 install mavproxy  && \
     apt remove -y modemmanager
     
 #DDS stuff
@@ -53,8 +53,13 @@ RUN echo "alias cb='colcon build --packages-select px4_msgs px4_ros2_cpp drone_c
 
 #Remove list
 RUN rm -rf /var/lib/apt/lists/* 
-    
 
 WORKDIR /root/ros2_ws
 
 CMD ["bash"]
+
+# RUN rm -rf ~/PX4-Autopilot-P6/Tools/simulation/gz/models/x500_lidar_front/ && \
+# 	cp -r ~/ros2_ws/src/simulator_bringup/models/x500_lidar_front ~/PX4-Autopilot-P6/Tools/simulation/gz/models/ && \
+# 	cp -r ~/ros2_ws/src/Leorover/leo_simulator-ros2/leo_gz_worlds/models/Obstacles ~/PX4-Autopilot-P6/Tools/simulation/gz/models/ && \
+# 	cp -r ~/ros2_ws/src/Leorover/leo_simulator-ros2/leo_gz_worlds/worlds/leo_p6.sdf ~/PX4-Autopilot-P6/Tools/simulation/gz/worlds/
+	

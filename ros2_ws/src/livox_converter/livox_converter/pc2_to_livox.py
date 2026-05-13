@@ -15,14 +15,14 @@ class PC2ToLivox(Node):
 
         self.sub = self.create_subscription(
             PointCloud2,
-            '/rover_lidar/points',
+            'lidar/points',
             self.lidar_callback,
             10
         )
 
         self.pub = self.create_publisher(
             CustomMsg,
-            '/livox/lidar',
+            'livox/lidar',
             10
         )
 

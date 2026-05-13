@@ -548,7 +548,7 @@
         <always_on>1</always_on>
         <visualize>true</visualize>
 
-        <topic>rover_lidar</topic>
+        <topic>${link_prefix}lidar</topic>
         <gz_frame_id>${link_prefix}lidar_link</gz_frame_id>
 
         <ray>
@@ -578,11 +578,25 @@
           <noise>
             <type>gaussian</type>
             <mean>0.0</mean>
-            <stddev>0.00001</stddev>
+            <stddev>0.01</stddev>
           </noise>
         </ray>
       </sensor>
     </gazebo>
+
+    <plugin
+      filename="gz-sim-odometry-publisher-system"
+      name="gz::sim::systems::OdometryPublisher">
+      <dimensions>3</dimensions>
+    </plugin>
+    <plugin
+      filename="gz-sim-pose-publisher-system"
+      name="gz::sim::systems::PosePublisher">
+      <publish_link_pose>true</publish_link_pose>
+      <publish_collision_pose>false</publish_collision_pose>
+      <publish_visual_pose>false</publish_visual_pose>
+      <publish_nested_model_pose>false</publish_nested_model_pose>
+    </plugin>
 
     <!-- rocker differential -->
     <gazebo>
