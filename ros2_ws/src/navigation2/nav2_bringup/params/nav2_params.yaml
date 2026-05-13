@@ -141,12 +141,12 @@ controller_server:
     FollowPath:
       plugin: "dwb_core::DWBLocalPlanner"
       debug_trajectory_details: True
-      min_vel_x: 0.0
+      min_vel_x: 0.1
       min_vel_y: 0.0
       max_vel_x: 0.4
       max_vel_y: 0.0
       max_vel_theta: 1.0
-      min_speed_xy: 0.0
+      min_speed_xy: 0.1
       max_speed_xy: 0.4
       min_speed_theta: 0.0
       # Add high threshold velocity for turtlebot 3 issue.
@@ -176,7 +176,7 @@ controller_server:
       GoalAlign.forward_point_distance: 0.1
       PathDist.scale: 32.0
       GoalDist.scale: 24.0
-      RotateToGoal.scale: 32.0
+      RotateToGoal.scale: 0.0
       RotateToGoal.slowing_factor: 5.0
       RotateToGoal.lookahead_time: -1.0
 
@@ -192,7 +192,7 @@ local_costmap:
       width: 6
       height: 6
       resolution: 0.2
-      robot_radius: 0.22
+      robot_radius: 0.4
       plugins: ["voxel_layer", "inflation_layer"]
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
@@ -263,7 +263,7 @@ map_server:
     use_sim_time: True
     # Overridden in launch by the "map" launch configuration or provided default value.
     # To use in yaml, remove the default "map" value in the tb3_simulation_launch.py file & provide full path to map below.
-    yaml_filename: ""
+    yaml_filename: "~/ros2_ws/src/Leorover/leo_simulator-ros2/leo_gz_worlds/World_maps/leo_p6.yaml"
 
 map_saver:
   ros__parameters:
