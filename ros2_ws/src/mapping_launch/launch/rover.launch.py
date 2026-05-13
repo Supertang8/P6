@@ -14,8 +14,6 @@ from launch_ros.descriptions import ParameterFile
 
 def generate_launch_description():
     # ── paths ────────────────────────────────────────────────────────────────
-    fast_lio_launch_path = os.path.join(
-        get_package_share_directory('fast_lio'), 'launch', 'mapping.launch.py')
     livox_rover_launch_path = os.path.join(
         get_package_share_directory('livox_ros_driver2'), 'launch', 'msg_MID360_rover_launch.py')
     rviz_cfg = os.path.join(
@@ -60,62 +58,20 @@ def generate_launch_description():
     #    a complete TF tree immediately on startup.
     # ═══════════════════════════════════════════════════════════════════════
 
-    # rover/camera_init → rover/odom  (fast_lio world frame anchor)
-    rover_odom_2_camera_init = Node(
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        namespace='rover',
-        arguments=[
-            '--x', '0', '--y', '0', '--z', '0',
-            '--qx', '0.0', '--qy', '0.0', '--qz', '0.0', '--qw', '1.0',
-            '--frame-id', 'rover/camera_init',
-            '--child-frame-id', 'rover/odom',
-        ],
-        parameters=[{'use_sim_time': use_sim_time}],
-    )
-
-    # drone/camera_init → drone/odom  (mirrors the drone's own static TF for
-    # cases where the rover processes drone data before the drone comes up)
-    drone_odom_2_camera_init = Node(
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        namespace='drone',
-        arguments=[
-            '--x', '0', '--y', '0', '--z', '0',
-            '--qx', '0.0', '--qy', '0.0', '--qz', '0.0', '--qw', '1.0',
-            '--frame-id', 'drone/camera_init',
-            '--child-frame-id', 'drone/odom',
-        ],
-        parameters=[{'use_sim_time': use_sim_time}],
-    )
-
-    # rover/body → livox  (required by nav2 for the rover footprint)
-    static_lidar_frame = Node(
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        arguments=[
-            '--x', '0', '--y', '0', '--z', '0',
-            '--qx', '0.0', '--qy', '0.0', '--qz', '0.0', '--qw', '1.0',
-            '--frame-id', 'rover/body',
-            '--child-frame-id', 'livox',
-        ],
-        parameters=[{'use_sim_time': use_sim_time}],
-    )
-
-    # livox → base_footprint  (required by nav2)
+    # rover/base_link → base_footprint  (ties rover base to nav2 base, point x in the opposite direction)
     static_base_link_frame = Node(
         package='tf2_ros',
         executable='static_transform_publisher',
         arguments=[
-            '--x', '-0.1', '--y', '0', '--z', '-0.26',
-            '--qx', '0.0', '--qy', '0.0', '--qz', '0.0', '--qw', '1.0',
+            '--x', '0.1', '--y', '0', '--z', '-0.26',
+            '--qx', '0.0', '--qy', '0.0', '--qz', '1.0', '--qw', '0.0',
             '--frame-id', 'rover/base_link',
             '--child-frame-id', 'base_link',
         ],
         parameters=[{'use_sim_time': use_sim_time}],
     )
 
-    # map → rover/camera_init  (ties the nav2 map frame to the rover world frame)
+    # map → rover/map  (ties the nav2 map frame to the rover world frame)
     static_map_frame = Node(
         package='tf2_ros',
         executable='static_transform_publisher',
@@ -128,7 +84,7 @@ def generate_launch_description():
         parameters=[{'use_sim_time': use_sim_time}],
     )
 
-    # rover/camera_init → odom  (nav2 odometry anchor)
+    # rover/odom → odom  (nav2 odometry anchor)
     static_odom_frame = Node(
         package='tf2_ros',
         executable='static_transform_publisher',
@@ -150,15 +106,6 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(livox_rover_launch_path),
     )
 
-    rover_fastlio = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(fast_lio_launch_path),
-        launch_arguments={
-            'config_file': 'mid360.yaml',
-            'rviz': 'false',
-            'namespace': 'rover',
-            'use_sim_time': use_sim_time,
-        }.items(),
-    )
     rover_lio_sam = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(get_package_share_directory('lio_sam'), 'launch', 'run.launch.py')),
         launch_arguments={
@@ -202,40 +149,6 @@ def generate_launch_description():
         ],
     )
 
-    rover_cloud_republisher = Node(
-        package='mapping_launch',
-        executable='cloud_world_aligned_republisher',
-        name='cloud_world_aligned_republisher',
-        namespace='rover',
-        output='screen',
-        parameters=[{
-            'odom_topic': 'Odometry',
-            'cloud_topic': 'cloud_registered',
-            'output_cloud_topic': 'cloud_registered_world_aligned',
-            #'output_cloud_topic': '/merged_cloud',
-            'output_frame': 'sensor_world_aligned',
-            'use_sim_time': use_sim_time,
-        }],
-    )
-
-
-
-    drone_cloud_republisher = Node(
-        package='mapping_launch',
-        executable='cloud_world_aligned_republisher',
-        name='cloud_world_aligned_republisher',
-        namespace='drone',
-        output='screen',
-        parameters=[{
-            'odom_topic': 'Odometry',
-            'cloud_topic': 'cloud_registered',
-            'output_cloud_topic': 'cloud_registered_world_aligned',
-            #'output_cloud_topic': '/merged_cloud',
-            'output_frame': 'sensor_world_aligned',
-            'use_sim_time': use_sim_time,
-        }],
-    )
-
 
     # ═══════════════════════════════════════════════════════════════════════
     # 5. CALIBRATION CHAIN
@@ -276,7 +189,7 @@ def generate_launch_description():
     # Waits for both robots' LIO-SAM odom→livox_frame TFs before publishing,
     # then signals the aggregators to shut down. The lidar lever-arm is
     # encoded in the URDF (lidar_joint origin) — no extrinsics needed here.
-    camera_init_from_raw_lidar = Node(
+    drone_to_rover_transform = Node(
         package='mapping_launch',
         executable='camera_init_tf_from_raw_lidar',
         name='camera_init_tf_from_raw_lidar',
@@ -302,7 +215,7 @@ def generate_launch_description():
         namespace='rover',
         output='screen',
         parameters=[{
-            'frame_id': 'rover/odom',
+            'frame_id': 'rover/map',
             'resolution': 0.2,
             'base_frame_id': 'rover/base_link',
             'filter_speckles': True,
@@ -336,8 +249,8 @@ def generate_launch_description():
         namespace='drone',
         output='screen',
         parameters=[{
-            'frame_id': 'rover/odom',
-            'resolution': 0.2,
+            'frame_id': 'rover/map',
+            'resolution': 0.4,
             'base_frame_id': 'drone/base_link',
             'filter_speckles': True,
             'filter_ground_plane': False,
@@ -414,10 +327,6 @@ def generate_launch_description():
         declare_use_sim_time_cmd,
 
         # ── static TFs (must be first) ──────────────────────────────────
-        #rover_odom_2_camera_init,
-        #drone_odom_2_camera_init,
-        #rover_odom_2_base_link,
-        #static_lidar_frame,
         static_base_link_frame,
         static_map_frame,
         static_odom_frame,
@@ -429,7 +338,6 @@ def generate_launch_description():
         rover_livox,
         TimerAction(period=10.0, actions=[rover_aggregator]),
         TimerAction(period=10.0, actions=[cloud_saver_node]),
-        TimerAction(period=20.0, actions=[rover_lio_sam]),
         
         RegisterEventHandler(
             event_handler=OnProcessExit(
@@ -440,21 +348,12 @@ def generate_launch_description():
         RegisterEventHandler(
             event_handler=OnProcessExit(
                 target_action=multi_lica,
-                on_exit=[camera_init_from_raw_lidar],
+                on_exit=[drone_to_rover_transform],
             )
         ),
 
-        #TimerAction(period=2.0, actions=[multi_lica]),
-        #TimerAction(period=3.0, actions=[camera_init_from_raw_lidar]),
-        #TimerAction(period=40.0, actions=[rover_fastlio]),
-        #TimerAction(period=60.0, actions=[rover_cloud_republisher, drone_cloud_republisher]),
-        #TimerAction(period=60.0, actions=[relay_rover_cloud, relay_drone_cloud]),
-        #TimerAction(period=70.0, actions=[combined_octomap_node]),
-        TimerAction(period=30.0, actions=[rover_octomap_node]),
-        TimerAction(period=35.0, actions=[drone_octomap_node]),
+        TimerAction(period=20.0, actions=[rover_lio_sam]),
+        TimerAction(period=40.0, actions=[rover_octomap_node]),
+        TimerAction(period=45.0, actions=[drone_octomap_node]),
         #TimerAction(period=70.0, actions=[nav2_node]),
-
-        #TimerAction(period=60.0, actions=[relay_rover_cloud, relay_drone_cloud, combined_octomap_node]),
-
-
     ])
