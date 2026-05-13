@@ -126,7 +126,7 @@ def generate_launch_description():
         output='screen',
         parameters=[{
             'odom_topic': 'lio_sam/mapping/odometry',
-            'frame_id': 'drone/odom',
+            'frame_id': 'drone/map',
             'child_frame_id': 'drone/base_footprint',
             'use_yaw_only': True,
             'use_sim_time': use_sim_time,
@@ -227,11 +227,11 @@ def generate_launch_description():
             # base_link is ≈ gravity-aligned (within ground_filter.angle),
             # and the lidar's fixed mount keeps the floor at a constant
             # z ≈ -0.26 in base_link regardless of slope.
-            'base_frame_id': 'rover/base_link',
+            'base_frame_id': 'base_footprint',
             'filter_speckles': True,
             'filter_ground_plane': True,
             'ground_filter.angle': 0.3,
-            'ground_filter.distance': 0.1,
+            'ground_filter.distance': 0.2,
             'ground_filter.plane_distance': 1.0,
             'sensor_model.max_range': 8.0,
             # Bounds in base_link. Floor is near z=-0.26; cap at ~1 m above
@@ -266,13 +266,13 @@ def generate_launch_description():
             'filter_speckles': True,
             'filter_ground_plane': True,
             'ground_filter.angle': 0.3,
-            'ground_filter.distance': 0.1,
+            'ground_filter.distance': 0.2,
             'ground_filter.plane_distance': 1.0,
             'sensor_model.max_range': 8.0,
             # Bounds are in base_footprint. min_z keeps the floor band so the
             # ground filter can see it; max_z caps to nav-relevant heights.
             'point_cloud_min_z': -1.0,
-            'point_cloud_max_z': 1.5,
+            'point_cloud_max_z': 1.0,
             'use_sim_time': use_sim_time,
         }],
         remappings=[
