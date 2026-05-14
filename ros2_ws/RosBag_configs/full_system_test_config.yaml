@@ -1,0 +1,18 @@
+recording:
+  topics:
+    # Need to have
+    - /tf
+    - /map
+    - /path
+    - /plan
+    - /goal_pose
+    - /offboard/setpoint
+    - /drone_rover_distance
+    - /drone/projected_map
+    - /rover/projected_map
+
+    # Nice to have
+    - /rover/cloud_registered
+    - /drone/cloud_registered
+    - /rover/occupancy_grid
+    - /drone/occupancy_grid
