@@ -205,8 +205,8 @@ class VelocityController(Node):
         self.get_logger().info(f"Control signal after CBF: ux={ux:.2f}, uy={uy:.2f}, uz={uz:.2f}", throttle_duration_sec=1.0)
 
         # Velocity limits
-        max_vel_xy = 2  # m/s
-        max_vel_z = 2   # m/s
+        max_vel_xy = 1  # m/s
+        max_vel_z = 1   # m/s
         ux = max(min(ux, max_vel_xy), -max_vel_xy)
         uy = max(min(uy, max_vel_xy), -max_vel_xy)
         uz = max(min(uz, max_vel_z), -max_vel_z)

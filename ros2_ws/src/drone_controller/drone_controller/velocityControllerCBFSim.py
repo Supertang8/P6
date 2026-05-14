@@ -42,7 +42,7 @@ class VelocityController(Node):
         self.prev_error_z = 0.0
 
         # CBF params
-        max_dist = 15.0
+        max_dist = 16.0
         safety_buffer = 1
         self.max_dist = max_dist-safety_buffer#Maximum distance from drone to rover
         self.alpha = 1.5
@@ -79,8 +79,8 @@ class VelocityController(Node):
         # Publisher for distance to rover
         self.distance_pub = self.create_publisher(Float64, "/drone_rover_distance", qos)
 
-        # Timer to compute and publish velocity at 10 Hz
-        self.timer = self.create_timer(0.1, self.control_loop)
+        # Timer to compute and publish velocity at 100 Hz
+        self.timer = self.create_timer(0.01, self.control_loop)
         self.status_timer = self.create_timer(3.0, self.status_loop)
         self.have_published = False
 

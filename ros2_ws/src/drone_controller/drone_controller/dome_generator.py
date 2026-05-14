@@ -15,6 +15,7 @@ class SafetyDome(Node):
 
         self.marker_pub = self.create_publisher(Marker, '/safe_zone_marker', 10)
         self.pose_pub = self.create_publisher(PoseStamped, '/drone_pose', 10)
+        self.rover_pose_pub = self.create_publisher(PoseStamped, '/rover_pose', 10)
 
         qos = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
@@ -79,6 +80,17 @@ class SafetyDome(Node):
         marker.color.a = 0.2
 
         self.marker_pub.publish(marker)
+
+        # Publish rover position
+        rover_pose = PoseStamped()
+        rover_pose.header.stamp = self.get_clock().now().to_msg()
+        rover_pose.header.frame_id = self.fixed_frame
+        rover_pose.pose.position.x = x
+        rover_pose.pose.position.y = y
+        rover_pose.pose.position.z = z
+        rover_pose.pose.orientation.w = 1.0
+
+        self.rover_pose_pub.publish(rover_pose)
 
     def pose_callback(self, msg: VehicleLocalPosition):
         pose = PoseStamped()
