@@ -5,6 +5,7 @@ import rclpy
 from geometry_msgs.msg import PoseStamped, Twist, TwistStamped
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
+from std_msgs.msg import Float64
 
 import tf2_ros
 from tf2_ros import TransformException
@@ -38,18 +39,24 @@ class VelocityController(Node):
         self.prev_error_z = 0.0
 
         # CBF parameters
-        self.max_dist = 1000.0 #Maximum distance from drone to rover
+        max_dist = 15.0
+        safety_buffer = 1
+        self.max_dist = max_dist-safety_buffer#Maximum distance from drone to rover
+        
         self.alpha = 1.5 #CBF gain (TUNE, ofte mellem 1-3)
+
+        ##DRONE HEIGHT
+        self.drone_height = -5.0 #meters
+
         ####### Rover state FOR TESTING PURPOSES, REPLACE WITH REAL SUBSCRIBER##########
         self.rover_pos = [0.0, 0.0, 0.0]  # [x,y,z]
         self.rover_vel = [0.0, 0.0, 0.0]
 
-        # --- TF2 setup ---
-        # Change these frame names to match your TF tree
-        self.parent_frame_drone = "drone/camera_init"        # e.g. "world", "odom"
-        self.child_frame_drone  = "drone/body"  # e.g. "drone", "body"
-        self.parent_frame_rover = "rover/camera_init"  # e.g. "world", "odom"
-        self.child_frame_rover = "rover/body"  # e.g. "rover", "base_link"
+        # --- TF tree setup ---
+        self.parent_frame_drone = "rover/map"        
+        self.child_frame_drone  = "drone/base_link"  
+        self.parent_frame_rover = "rover/odom"  
+        self.child_frame_rover = "rover/base_link"  
         self.tf_buffer = tf2_ros.Buffer() 
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
 
@@ -71,6 +78,9 @@ class VelocityController(Node):
 
         # Publisher for velocity commands (ROS standard)
         self.twist_pub = self.create_publisher(TwistStamped, "/offboard/velocity", qos)
+
+        # Publisher for distance to rover
+        self.distance_pub = self.create_publisher(Float64, "/drone_rover_distance", qos)
 
         # Timer to compute and publish velocity at 10 Hz
         self.timer = self.create_timer(0.1, self.control_loop)
@@ -168,10 +178,19 @@ class VelocityController(Node):
         if self.desired_pose is None or self.current_pos is None:
             return
 
+        # Compute distance to rover
+        dx = self.current_pos[0] - self.rover_pos[0]
+        dy = self.current_pos[1] - self.rover_pos[1]
+        dz = self.current_pos[2] - self.rover_pos[2]
+        distance = (dx**2 + dy**2 + dz**2) ** 0.5
+        dist_msg = Float64()
+        dist_msg.data = distance
+        self.distance_pub.publish(dist_msg)
+
         # Extract position differences
         dx = self.desired_pose.pose.position.x - self.current_pos[0]
         dy = self.desired_pose.pose.position.y - self.current_pos[1]
-        dz = self.desired_pose.pose.position.z - self.current_pos[2]
+        dz = self.drone_height - self.current_pos[2]
 
         #print dx, dy, dz
         #self.get_logger().info(f"Position error: dx={dx:.2f}, dy={dy:.2f}, dz={dz:.2f}")
@@ -211,7 +230,7 @@ class VelocityController(Node):
         ux, uy, uz = self.apply_cbf(ux, uy, uz)
 
         # Velocity limits
-        max_vel_xy = 5.0  # m/s
+        max_vel_xy = 0.8  # m/s
         max_vel_z = 1.0   # m/s
         ux = max(min(ux, max_vel_xy), -max_vel_xy)
         uy = max(min(uy, max_vel_xy), -max_vel_xy)

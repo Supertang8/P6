@@ -42,10 +42,14 @@ class VelocityController(Node):
         self.prev_error_z = 0.0
 
         # CBF params
-        max_dist = 16.0
+        max_dist = 15.0
         safety_buffer = 1
         self.max_dist = max_dist-safety_buffer#Maximum distance from drone to rover
         self.alpha = 1.5
+
+        ##DRONE HEIGHT
+        self.drone_height = -5.0 #meters
+
         ####### Rover state FOR TESTING PURPOSES, REPLACE WITH REAL SUBSCRIBER##########
         self.rover_pos = [0.0, 0.0, 0.0]  # [x,y,z]
         self.rover_vel = [0.0, 0.0, 0.0]
@@ -171,7 +175,7 @@ class VelocityController(Node):
         # Extract position differences
         dx = self.desired_pose.pose.position.x - self.current_pos[0]
         dy = self.desired_pose.pose.position.y - self.current_pos[1]
-        dz = self.desired_pose.pose.position.z - self.current_pos[2]
+        dz = self.drone_height - self.current_pos[2]
 
         #print dx, dy, dz
         #self.get_logger().info(f"Position error: dx={dx:.2f}, dy={dy:.2f}, dz={dz:.2f}")
