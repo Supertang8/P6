@@ -83,7 +83,10 @@ class firstPointInPath(Node):
                 setpoint.pose.position.z = pos.z
                 setpoint.pose.orientation.w = 1.0  # Identity quaternion (no rotation)
                 self.publisher.publish(setpoint)
+                #print the setpoint
+                self.get_logger().info(f'Publishing setpoint: x={setpoint.pose.position.x:.2f}, y={setpoint.pose.position.y:.2f}, z={setpoint.pose.position.z:.2f}')
                 return
+
         
     
 def main(args=None):
