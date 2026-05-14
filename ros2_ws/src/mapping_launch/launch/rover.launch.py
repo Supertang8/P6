@@ -9,11 +9,9 @@ from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
-from launch_ros.descriptions import ParameterFile
-
 
 def generate_launch_description():
-    # ── paths ────────────────────────────────────────────────────────────────
+    # ── paths ──────────────────────────────────────────────────────────────
     livox_rover_launch_path = os.path.join(
         get_package_share_directory('livox_ros_driver2'), 'launch', 'msg_MID360_rover_launch.py')
     rviz_cfg = os.path.join(
@@ -37,7 +35,7 @@ def generate_launch_description():
     nav2_params = os.path.expanduser(
         '~/ros2_ws/src/navigation2/nav2_bringup/params/nav2_params.yaml')
 
-    # ── args ─────────────────────────────────────────────────────────────────
+    # ── arguments ──────────────────────────────────────────────────────────
     rviz = LaunchConfiguration('rviz')
     use_sim_time = LaunchConfiguration('use_sim_time')
 
@@ -108,29 +106,6 @@ def generate_launch_description():
             'rviz': rviz,
             'use_sim_time': use_sim_time,
         }.items(),
-    )
-
-    # Virtual gravity-aligned base frame for the drone octomap's
-    # filter_ground_plane. The drone banks/pitches in flight and varies in
-    # altitude, so drone/base_link (lidar pose) is neither gravity-aligned
-    # nor close to the floor. LIO-SAM's drone/odom is gravity-calibrated at
-    # startup, so a yaw-only TF off drone/odom gives a base frame whose Z
-    # axis matches gravity and whose origin sits at z=0 in drone/odom (≈
-    # ground at takeoff). Floor's z in this frame stays within
-    # ground_filter.plane_distance of zero. New frame name avoids colliding
-    # with LIO-SAM imuPreintegration's drone/odom -> drone/base_link TF.
-    drone_base_footprint = Node(
-        package='odom_to_tf_ros2',
-        executable='odom_to_tf',
-        namespace='drone',
-        output='screen',
-        parameters=[{
-            'odom_topic': 'lio_sam/mapping/odometry',
-            'frame_id': 'drone/map',
-            'child_frame_id': 'drone/base_footprint',
-            'use_yaw_only': True,
-            'use_sim_time': use_sim_time,
-        }],
     )
 
     # Aggregates rover's raw pointclouds into one for calibration
@@ -221,23 +196,25 @@ def generate_launch_description():
         namespace='rover',
         output='screen',
         parameters=[{
-            'frame_id': 'rover/map',
+            'frame_id': 'rover/odom',
             'resolution': 0.2,
-            # rover/base_link is fine here: rover stays near horizontal so
-            # base_link is ≈ gravity-aligned (within ground_filter.angle),
-            # and the lidar's fixed mount keeps the floor at a constant
-            # z ≈ -0.26 in base_link regardless of slope.
-            'base_frame_id': 'base_footprint',
+            # rover/odom is gravity-aligned (LIO-SAM gravity-calibrates) and
+            # static-identity with rover/map. Using it keeps the TF lookup
+            # at the mapping rate (rover/lidar_link -> rover/odom is broadcast
+            # alongside the cloud), avoiding the IMU-rate race that any
+            # rover/base_link descendant exposes. Floor sits at z ≈ -0.26
+            # in odom, well inside ground_filter.plane_distance.
+            'base_frame_id': 'rover/odom',
             'filter_speckles': True,
             'filter_ground_plane': True,
             'ground_filter.angle': 0.3,
             'ground_filter.distance': 0.2,
             'ground_filter.plane_distance': 1.0,
             'sensor_model.max_range': 8.0,
-            # Bounds in base_link. Floor is near z=-0.26; cap at ~1 m above
-            # the lidar for nav-relevant obstacles.
-            'point_cloud_min_z': -0.5,
-            'point_cloud_max_z': 1.0,
+            # Bounds in rover/odom. Floor near z=-0.26; widen to absorb
+            # slope drift in odom.
+            'point_cloud_min_z': -1.0,
+            'point_cloud_max_z': 1.5,
             'use_sim_time': use_sim_time,
         }],
         remappings=[
@@ -258,21 +235,28 @@ def generate_launch_description():
         namespace='drone',
         output='screen',
         parameters=[{
+            # Drone octree is fused into rover/map so merge_map_node sees
+            # both projected maps in the same frame. The cross-robot offset
+            # is absorbed at insertion via the rover/odom -> drone/odom
+            # calibration TF.
             'frame_id': 'rover/map',
             'resolution': 0.4,
-            # Gravity-aligned virtual base; with use_yaw_only it sits at
-            # z=0 in drone/odom (≈ ground level since drone takes off there).
-            'base_frame_id': 'drone/base_footprint',
+            # drone/odom is gravity-aligned and static-identity with
+            # drone/map. Using it keeps the TF lookup at the mapping rate
+            # (drone/lidar_link -> drone/odom). Floor sits at z ≈ -0.26
+            # in drone/odom (≈ lidar height at takeoff), within
+            # ground_filter.plane_distance.
+            'base_frame_id': 'drone/odom',
             'filter_speckles': True,
             'filter_ground_plane': True,
             'ground_filter.angle': 0.3,
             'ground_filter.distance': 0.2,
             'ground_filter.plane_distance': 1.0,
             'sensor_model.max_range': 8.0,
-            # Bounds are in base_footprint. min_z keeps the floor band so the
-            # ground filter can see it; max_z caps to nav-relevant heights.
+            # Bounds in drone/odom. Floor near z=-0.26; widen to absorb
+            # slope drift in odom.
             'point_cloud_min_z': -1.0,
-            'point_cloud_max_z': 1.0,
+            'point_cloud_max_z': 1.5,
             'use_sim_time': use_sim_time,
         }],
         remappings=[
@@ -327,6 +311,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        # ── launch arguments ────────────────────────────────────────────
         declare_rviz_cmd,
         declare_use_sim_time_cmd,
 
@@ -336,10 +321,11 @@ def generate_launch_description():
         static_odom_frame,
         
 
-        # ── rover hardware (livox + aggregator for calibration) ──────────
+        # ── rover hardware (livox + aggregator for calibration) ─────────
         merge_map_node,
         map_expander,
         rover_livox,
+
         TimerAction(period=10.0, actions=[rover_aggregator]),
         TimerAction(period=10.0, actions=[cloud_saver_node]),
         
@@ -355,9 +341,23 @@ def generate_launch_description():
                 on_exit=[drone_to_rover_transform],
             )
         ),
-
-        TimerAction(period=20.0, actions=[rover_lio_sam]),
-        TimerAction(period=40.0, actions=[rover_octomap_node]),
-        TimerAction(period=45.0, actions=[drone_octomap_node, drone_base_footprint]),
+        RegisterEventHandler(
+            event_handler=OnProcessExit(
+                target_action=multi_lica,
+                on_exit=[TimerAction(period=10.0, actions=[rover_lio_sam])],
+            )
+        ),
+        RegisterEventHandler(
+            event_handler=OnProcessExit(
+                target_action=multi_lica,
+                on_exit=[TimerAction(period=30.0, actions=[rover_octomap_node])],
+            )
+        ),
+        RegisterEventHandler(
+            event_handler=OnProcessExit(
+                target_action=multi_lica,
+                on_exit=[TimerAction(period=35.0, actions=[drone_octomap_node])],
+            )
+        ),
         #TimerAction(period=70.0, actions=[nav2_node]),
     ])

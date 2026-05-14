@@ -11,73 +11,30 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
-    fast_lio_launch_path = os.path.join(
-        get_package_share_directory('fast_lio'), 'launch', 'mapping.launch.py')
+
+    # ── paths ─────────────────────────────────────────────────────────────
     livox_drone_launch_path = os.path.join(
         get_package_share_directory('livox_ros_driver2'), 'launch', 'msg_MID360_drone_launch.py')
 
+    # ── arguments ─────────────────────────────────────────────────────────
     use_sim_time = LaunchConfiguration('use_sim_time')
 
     declare_use_sim_time_cmd = DeclareLaunchArgument(
         'use_sim_time', default_value='false',
         description='Use simulation clock if true')
 
-
-    #############################################################################
-    # Transforms
-
-    # Static TF: drone/camera_init → drone/odom  (fast_lio world frame anchor)
-    odom_2_camera_init = Node(
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        namespace='drone',
-        arguments=[
-            '--x', '0', '--y', '0', '--z', '0',
-            '--qx', '0.0', '--qy', '0.0', '--qz', '0.0', '--qw', '1.0',
-            '--frame-id', 'drone/camera_init',
-            '--child-frame-id', 'drone/odom',
-        ],
-        parameters=[{'use_sim_time': use_sim_time}],
-    )
-
-    # Dynamic TF: drone/odom → drone/base_link, derived from fast_lio odometry
-    odom_2_base_link = Node(
-        package='odom_to_tf_ros2',
-        executable='odom_to_tf',
-        namespace='drone',
-        output='screen',
-        parameters=[{
-            'odom_topic': 'Odometry',
-            'frame_id': 'drone/odom',
-            'child_frame_id': 'drone/base_link',
-            'use_yaw_only': True,
-            'use_sim_time': use_sim_time,
-        }],
-    )
-
-
-    drone_cloud_republisher = Node(
-        package='mapping_launch',
-        executable='cloud_world_aligned_republisher',
-        name='cloud_world_aligned_republisher',
-        namespace='drone',
-        output='screen',
-        parameters=[{
-            'odom_topic': 'Odometry',
-            'cloud_topic': 'cloud_registered',
-            'output_cloud_topic': 'cloud_registered_world_aligned',
-            'output_frame': 'sensor_world_aligned',
-            'use_sim_time': use_sim_time,
-        }],
-    )
-
-    #############################################################################
-    # Nodes
+    # ══════════════════════════════════════════════════════════════════════
+    # 1. HARDWARE
+    # ══════════════════════════════════════════════════════════════════════
 
     # Livox MID360 driver for the drone
     livox_driver = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(livox_drone_launch_path),
     )
+
+    # ══════════════════════════════════════════════════════════════════════
+    # 2. CALIBRATION
+    # ══════════════════════════════════════════════════════════════════════
 
     # Pointcloud aggregator starts 10 s after livox to let the LiDAR stabilise.
     # It waits for the rover's gather_aggregated_clouds to call the trigger
@@ -101,16 +58,6 @@ def generate_launch_description():
         ],
     )
 
-
-    fastlio = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(fast_lio_launch_path),
-        launch_arguments={
-            'config_file': 'mid360.yaml',
-            'rviz': 'false',
-            'namespace': 'drone',
-            'use_sim_time': use_sim_time,
-        }.items(),
-    )
     drone_lio_sam = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(get_package_share_directory('lio_sam'), 'launch', 'run.launch.py')),
         launch_arguments={
@@ -124,16 +71,13 @@ def generate_launch_description():
     return LaunchDescription([
         declare_use_sim_time_cmd,
 
-        # Transforms
-        #odom_2_camera_init,
-        #odom_2_base_link,
-
         # Nodes
         livox_driver,
         TimerAction(period=10.0, actions=[aggregator_node]),
-        TimerAction(period=20.0, actions=[drone_lio_sam]),
-        #TimerAction(period=25.0, actions=[fastlio]),
-        #TimerAction(period=30.0, actions=[drone_cloud_republisher]),
-        #TimerAction(period=10.0, actions=[aggregator_node]),
-        #fastlio_after_calibration,
+        RegisterEventHandler(
+            event_handler=OnProcessExit(
+                target_action=aggregator_node,
+                on_exit=[TimerAction(period=20.0, actions=[drone_lio_sam])],
+            )
+        ),
     ])
