@@ -60,7 +60,7 @@ RUN rosdep update
 # Auto-source ROS
 RUN echo "source /opt/ros/humble/setup.bash" >> /root/.bashrc
 RUN echo "source /root/ros2_ws/install/setup.bash" >> /root/.bashrc 
-RUN echo "alias cb='colcon build --packages-select livox_converter calibrate_lidars odom_to_tf_ros2 mapping_launch livox_ros_driver2 px4_msgs px4_ros2_cpp px4_controller drone_controller system_package autorccar_interfaces lio_sam'" >> /root/.bashrc 
+RUN echo "alias cb='colcon build --packages-select livox_converter calibrate_lidars odom_to_tf_ros2 mapping_launch livox_ros_driver2 px4_msgs px4_ros2_cpp px4_controller drone_controller autorccar_interfaces lio_sam'" >> /root/.bashrc 
 
 
 # Install Livox SDK
