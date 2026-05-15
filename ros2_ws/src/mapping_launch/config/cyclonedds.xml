@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  CycloneDDS configuration for the dual-robot P6 system.
+
+  Topology: rover laptop (192.168.0.205) <-> drone Pi (192.168.0.202) over wifi.
+
+  Goals:
+    * No multicast. Wifi APs frequently drop or rate-limit multicast, which
+      breaks SPDP discovery and reliable retransmissions. Discovery falls
+      back to unicast SPDP via the explicit <Peers> list.
+    * Large UDP socket buffers so 10 Hz pointclouds (~50 KB each plus IMU)
+      don't drop bursts at the kernel boundary.
+    * Both machines share this file via the mapping_launch package share
+      dir, loaded through CYCLONEDDS_URI in the launch files.
+-->
+<CycloneDDS xmlns="https://cdds.io/config"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="https://cdds.io/config https://raw.githubusercontent.com/eclipse-cyclonedds/cyclonedds/master/etc/cyclonedds.xsd">
+  <Domain id="any">
+    <General>
+      <Interfaces>
+        <NetworkInterface autodetermine="true" priority="default" multicast="false"/>
+      </Interfaces>
+      <AllowMulticast>false</AllowMulticast>
+    </General>
+
+    <Discovery>
+      <ParticipantIndex>auto</ParticipantIndex>
+      <Peers>
+        <Peer address="192.168.0.205"/>  <!-- rover laptop -->
+        <Peer address="192.168.0.202"/>  <!-- drone Pi -->
+        <Peer address="192.168.0.201"/>  <!-- 3rd-party TF publisher -->
+      </Peers>
+    </Discovery>
+
+    <Internal>
+      <SocketReceiveBufferSize min="10MB"/>
+      <SocketSendBufferSize min="10MB"/>
+    </Internal>
+  </Domain>
+</CycloneDDS>
