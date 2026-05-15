@@ -39,7 +39,7 @@ public:
           // If initial yaw not set, assume 0 (ENU aligned)
           _velocity_ned = Eigen::Vector3f{
             vel_global.y(),
-            vel_global.x(),
+           -vel_global.x(),
             vel_global.z()
           };
         }
