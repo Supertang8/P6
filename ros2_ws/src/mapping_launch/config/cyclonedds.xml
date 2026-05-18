@@ -29,7 +29,8 @@
       <Peers>
         <Peer address="192.168.0.205"/>  <!-- rover laptop -->
         <Peer address="192.168.0.202"/>  <!-- drone Pi -->
-        <Peer address="192.168.0.201"/>  <!-- 3rd-party TF publisher -->
+        <Peer address="192.168.0.201"/>  <!-- leorover Pi -->
+        <Peer address="192.168.0.210"/>  <!-- laptop for rviz -->
       </Peers>
     </Discovery>
 

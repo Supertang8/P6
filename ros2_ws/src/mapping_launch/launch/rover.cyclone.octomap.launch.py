@@ -1,3 +1,13 @@
+"""Rover bringup (CycloneDDS) with the drone octomap pushed to the drone Pi.
+
+Same as rover.cyclone.launch.py except drone_octomap_node is NOT launched
+here. The drone runs its own octomap via drone.cyclone.octomap.launch.py
+so its deskewed pointcloud stays local; only /drone/projected_map crosses
+the network to merge_map_node on the rover.
+
+Pair this file with drone.cyclone.octomap.launch.py.
+"""
+
 import os
 
 from ament_index_python.packages import get_package_share_directory
@@ -29,11 +39,21 @@ def generate_launch_description():
         raise RuntimeError(
             f'Could not locate Multi_LiCa directory, tried: {multi_lica_src_candidates}')
     calibration_files_dir = os.path.join(multi_lica_src, 'data', 'drone_to_rover_calibration')
-    
+
     nav2_launch = os.path.join(
-        get_package_share_directory('nav2_bringup'), 'launch', 'navigation_launch.py')
+        get_package_share_directory('mapping_launch'), 'launch', 'nav2.cyclone.launch.py')
     nav2_params = os.path.expanduser(
         '~/ros2_ws/src/navigation2/nav2_bringup/params/nav2_params.yaml')
+
+    cyclonedds_uri = 'file://' + os.path.join(
+        get_package_share_directory('mapping_launch'), 'config', 'cyclonedds.xml')
+
+    # ── DDS configuration ─────────────────────────────────────────────────
+    # Force CycloneDDS as RMW and point it at the workspace-shared XML so
+    # discovery uses unicast peers (drone Pi <-> rover laptop) instead of
+    # wifi multicast. Must be set before any node spawns.
+    set_rmw = SetEnvironmentVariable('RMW_IMPLEMENTATION', 'rmw_cyclonedds_cpp')
+    set_cyclone_uri = SetEnvironmentVariable('CYCLONEDDS_URI', cyclonedds_uri)
 
     # ── arguments ──────────────────────────────────────────────────────────
     rviz = LaunchConfiguration('rviz')
@@ -196,7 +216,8 @@ def generate_launch_description():
     )
 
     # ═══════════════════════════════════════════════════════════════════════
-    # 6. OCTOMAPS  – rover and drone, both built on the rover
+    # 6. OCTOMAP  – rover only; drone octomap is launched on the drone Pi
+    #    by drone.cyclone.octomap.launch.py to keep its pointcloud local.
     # ═══════════════════════════════════════════════════════════════════════
 
     # Rover octomap starts after calibration (MultiLiCa exits), together
@@ -232,49 +253,6 @@ def generate_launch_description():
             # slope drift in odom.
             'point_cloud_min_z': -1.0,
             'point_cloud_max_z': 1.5,
-            'use_sim_time': use_sim_time,
-        }],
-        remappings=[
-            ('cloud_in', 'lio_sam/mapping/cloud_deskewed_sync'),
-            ('/projected_map', 'map'),
-            ('/octomap_binary', 'octomap_binary'),
-            ('/octomap_full', 'octomap_full'),
-            ('/octomap_point_cloud_centers', 'octomap_point_cloud_centers'),
-            ('/occupied_cells_vis_array', 'occupied_cells_vis_array'),
-            ('/free_cells_vis_array', 'free_cells_vis_array'),
-        ],
-    )
-
-    drone_octomap_node = Node(
-        package='octomap_server',
-        executable='octomap_server_node',
-        name='octomap_server',
-        namespace='drone',
-        output='screen',
-        parameters=[{
-            # Drone octree is fused into rover/map so merge_map_node sees
-            # both projected maps in the same frame. The cross-robot offset
-            # is absorbed at insertion via the rover/odom -> drone/odom
-            # calibration TF.
-            'frame_id': 'rover/map',
-            'resolution': 0.4,
-            # drone/odom is gravity-aligned and static-identity with
-            # drone/map. Using it keeps the TF lookup at the mapping rate
-            # (drone/lidar_link -> drone/odom). Floor sits at z ≈ -0.26
-            # in drone/odom (≈ lidar height at takeoff), within
-            # ground_filter.plane_distance.
-            'base_frame_id': 'ground',
-            'filter_speckles': True,
-            'filter_ground_plane': True,
-            'ground_filter.angle': 0.15,
-            'ground_filter.distance': 0.2,
-            'ground_filter.plane_distance': 0.2,
-            'sensor_model.max_range': 8.0,
-            # Bounds in drone/odom. Floor near z=-0.26; widen to absorb
-            # slope drift in odom.
-            'point_cloud_min_z': -1.0,
-            'point_cloud_max_z': 1.5,
-	    #'latch': False,
             'use_sim_time': use_sim_time,
         }],
         remappings=[
@@ -329,6 +307,11 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        # DDS env vars MUST come before any Node/IncludeLaunchDescription so
+        # every spawned process inherits CycloneDDS + the unicast peer config.
+        set_rmw,
+        set_cyclone_uri,
+
         # ── launch arguments ────────────────────────────────────────────
         declare_rviz_cmd,
         declare_use_sim_time_cmd,
@@ -338,7 +321,7 @@ def generate_launch_description():
         static_map_frame,
         static_odom_frame,
 	static_ground_frame,
-        
+
 
         # ── rover hardware (livox + aggregator for calibration) ─────────
         merge_map_node,
@@ -347,7 +330,7 @@ def generate_launch_description():
 
         TimerAction(period=10.0, actions=[rover_aggregator]),
         TimerAction(period=10.0, actions=[cloud_saver_node]),
-        
+
         RegisterEventHandler(
             event_handler=OnProcessExit(
                 target_action=cloud_saver_node,
@@ -370,12 +353,6 @@ def generate_launch_description():
             event_handler=OnProcessExit(
                 target_action=multi_lica,
                 on_exit=[TimerAction(period=30.0, actions=[rover_octomap_node])],
-            )
-        ),
-        RegisterEventHandler(
-            event_handler=OnProcessExit(
-                target_action=multi_lica,
-                on_exit=[TimerAction(period=35.0, actions=[drone_octomap_node])],
             )
         ),
         #TimerAction(period=70.0, actions=[nav2_node]),

@@ -41,6 +41,16 @@ STAGE_3_DELAY_SEC = 10.0
 def generate_launch_description():
     bringup_dir = get_package_share_directory('nav2_bringup')
 
+    cyclonedds_uri = 'file://' + os.path.join(
+        get_package_share_directory('mapping_launch'), 'config', 'cyclonedds.xml')
+
+    # ── DDS configuration ─────────────────────────────────────────────────
+    # Force CycloneDDS as RMW and point it at the workspace-shared XML so
+    # discovery uses unicast peers (drone Pi <-> rover laptop) instead of
+    # wifi multicast. Must be set before any node spawns.
+    set_rmw = SetEnvironmentVariable('RMW_IMPLEMENTATION', 'rmw_cyclonedds_cpp')
+    set_cyclone_uri = SetEnvironmentVariable('CYCLONEDDS_URI', cyclonedds_uri)
+
     namespace = LaunchConfiguration('namespace')
     use_sim_time = LaunchConfiguration('use_sim_time')
     params_file = LaunchConfiguration('params_file')
@@ -158,6 +168,10 @@ def generate_launch_description():
     stage_3 = _stage_manager('lifecycle_manager_nav_stage3', STAGE_3_NODES)
 
     ld = LaunchDescription()
+    # DDS env vars MUST be added before any Node so every spawned process
+    # inherits CycloneDDS + the unicast peer config.
+    ld.add_action(set_rmw)
+    ld.add_action(set_cyclone_uri)
     ld.add_action(stdout_linebuf_envvar)
     ld.add_action(declare_namespace_cmd)
     ld.add_action(declare_use_sim_time_cmd)

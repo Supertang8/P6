@@ -31,9 +31,19 @@ def generate_launch_description():
     calibration_files_dir = os.path.join(multi_lica_src, 'data', 'drone_to_rover_calibration')
     
     nav2_launch = os.path.join(
-        get_package_share_directory('nav2_bringup'), 'launch', 'navigation_launch.py')
+        get_package_share_directory('mapping_launch'), 'launch', 'nav2.cyclone.launch.py')
     nav2_params = os.path.expanduser(
         '~/ros2_ws/src/navigation2/nav2_bringup/params/nav2_params.yaml')
+
+    cyclonedds_uri = 'file://' + os.path.join(
+        get_package_share_directory('mapping_launch'), 'config', 'cyclonedds.xml')
+
+    # ── DDS configuration ─────────────────────────────────────────────────
+    # Force CycloneDDS as RMW and point it at the workspace-shared XML so
+    # discovery uses unicast peers (drone Pi <-> rover laptop) instead of
+    # wifi multicast. Must be set before any node spawns.
+    set_rmw = SetEnvironmentVariable('RMW_IMPLEMENTATION', 'rmw_cyclonedds_cpp')
+    set_cyclone_uri = SetEnvironmentVariable('CYCLONEDDS_URI', cyclonedds_uri)
 
     # ── arguments ──────────────────────────────────────────────────────────
     rviz = LaunchConfiguration('rviz')
@@ -329,6 +339,11 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        # DDS env vars MUST come before any Node/IncludeLaunchDescription so
+        # every spawned process inherits CycloneDDS + the unicast peer config.
+        set_rmw,
+        set_cyclone_uri,
+
         # ── launch arguments ────────────────────────────────────────────
         declare_rviz_cmd,
         declare_use_sim_time_cmd,
