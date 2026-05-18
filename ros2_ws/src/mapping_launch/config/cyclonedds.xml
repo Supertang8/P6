@@ -35,8 +35,8 @@
     </Discovery>
 
     <Internal>
-      <SocketReceiveBufferSize min="5MB"/>
-      <SocketSendBufferSize min="5MB"/>
+      <SocketReceiveBufferSize min="4MB"/>
+      <SocketSendBufferSize min="4MB"/>
     </Internal>
   </Domain>
 </CycloneDDS>
