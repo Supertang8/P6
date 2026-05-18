@@ -90,6 +90,18 @@ def generate_launch_description():
         parameters=[{'use_sim_time': use_sim_time}],
     )
 
+    static_ground_frame = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        arguments=[
+            '--x', '0.0', '--y', '0.0', '--z', '-0.26',
+            '--qx', '0.0', '--qy', '0.0', '--qz', '0.0', '--qw', '1.0',
+            '--frame-id', 'rover/map',
+            '--child-frame-id', 'ground',
+        ],
+        parameters=[{'use_sim_time': use_sim_time}],
+    )
+
     # ═══════════════════════════════════════════════════════════════════════
     # 2. ROVER HARDWARE  – livox only; lio_sam starts after calibration
     # ═══════════════════════════════════════════════════════════════════════
@@ -197,20 +209,25 @@ def generate_launch_description():
         output='screen',
         parameters=[{
             'frame_id': 'rover/odom',
-            'resolution': 0.2,
+            'resolution': 0.4,
             # rover/odom is gravity-aligned (LIO-SAM gravity-calibrates) and
             # static-identity with rover/map. Using it keeps the TF lookup
             # at the mapping rate (rover/lidar_link -> rover/odom is broadcast
             # alongside the cloud), avoiding the IMU-rate race that any
             # rover/base_link descendant exposes. Floor sits at z ≈ -0.26
             # in odom, well inside ground_filter.plane_distance.
-            'base_frame_id': 'rover/odom',
+            'base_frame_id': 'ground',
             'filter_speckles': True,
             'filter_ground_plane': True,
-            'ground_filter.angle': 0.3,
+            'ground_filter.angle': 0.05,
             'ground_filter.distance': 0.2,
-            'ground_filter.plane_distance': 1.0,
+            'ground_filter.plane_distance': 0.2,
             'sensor_model.max_range': 8.0,
+	    'sensor_model.hit': 0.7,
+	    'sensor_model.miss': 0.4,
+	    'sensor_model.min': 0.12,
+	    'sensor_model.max': 0.97,
+	    #'latch': False,
             # Bounds in rover/odom. Floor near z=-0.26; widen to absorb
             # slope drift in odom.
             'point_cloud_min_z': -1.0,
@@ -246,17 +263,18 @@ def generate_launch_description():
             # (drone/lidar_link -> drone/odom). Floor sits at z ≈ -0.26
             # in drone/odom (≈ lidar height at takeoff), within
             # ground_filter.plane_distance.
-            'base_frame_id': 'drone/odom',
+            'base_frame_id': 'ground',
             'filter_speckles': True,
             'filter_ground_plane': True,
-            'ground_filter.angle': 0.3,
+            'ground_filter.angle': 0.15,
             'ground_filter.distance': 0.2,
-            'ground_filter.plane_distance': 1.0,
+            'ground_filter.plane_distance': 0.2,
             'sensor_model.max_range': 8.0,
             # Bounds in drone/odom. Floor near z=-0.26; widen to absorb
             # slope drift in odom.
             'point_cloud_min_z': -1.0,
             'point_cloud_max_z': 1.5,
+	    #'latch': False,
             'use_sim_time': use_sim_time,
         }],
         remappings=[
@@ -319,6 +337,7 @@ def generate_launch_description():
         static_base_link_frame,
         static_map_frame,
         static_odom_frame,
+	static_ground_frame,
         
 
         # ── rover hardware (livox + aggregator for calibration) ─────────
