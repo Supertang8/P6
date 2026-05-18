@@ -209,24 +209,24 @@ def generate_launch_description():
         output='screen',
         parameters=[{
             'frame_id': 'rover/odom',
-            'resolution': 0.4,
+            'resolution': 0.2,
             # rover/odom is gravity-aligned (LIO-SAM gravity-calibrates) and
             # static-identity with rover/map. Using it keeps the TF lookup
             # at the mapping rate (rover/lidar_link -> rover/odom is broadcast
             # alongside the cloud), avoiding the IMU-rate race that any
             # rover/base_link descendant exposes. Floor sits at z ≈ -0.26
             # in odom, well inside ground_filter.plane_distance.
-            'base_frame_id': 'ground',
+            'base_frame_id': 'rover/odom',
             'filter_speckles': True,
             'filter_ground_plane': True,
-            'ground_filter.angle': 0.05,
+            'ground_filter.angle': 0.3,
             'ground_filter.distance': 0.2,
-            'ground_filter.plane_distance': 0.2,
+            'ground_filter.plane_distance': 1.0,
             'sensor_model.max_range': 8.0,
-	    'sensor_model.hit': 0.7,
-	    'sensor_model.miss': 0.4,
-	    'sensor_model.min': 0.12,
-	    'sensor_model.max': 0.97,
+	    #'sensor_model.hit': 0.7,
+	    #'sensor_model.miss': 0.4,
+	    #'sensor_model.min': 0.12,
+	    #'sensor_model.max': 0.97,
 	    #'latch': False,
             # Bounds in rover/odom. Floor near z=-0.26; widen to absorb
             # slope drift in odom.
