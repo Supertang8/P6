@@ -40,4 +40,9 @@ add_executable(velocityToDrone src/velocityToDrone.cpp)
 target_link_libraries(velocityToDrone PUBLIC Eigen3::Eigen px4_ros2_cpp::px4_ros2_cpp rclcpp::rclcpp ${geometry_msgs_TARGETS})
 install(TARGETS velocityToDrone DESTINATION lib/${PROJECT_NAME})
 
+# velocityToDroneLocalGlobal.cpp startup
+add_executable(velocityToDroneLocalGlobal src/velocityToDroneLocalGlobal.cpp)
+target_link_libraries(velocityToDroneLocalGlobal PUBLIC Eigen3::Eigen px4_ros2_cpp::px4_ros2_cpp rclcpp::rclcpp ${geometry_msgs_TARGETS} ${px4_msgs_TARGETS})
+install(TARGETS velocityToDroneLocalGlobal DESTINATION lib/${PROJECT_NAME})
+
 ament_package()

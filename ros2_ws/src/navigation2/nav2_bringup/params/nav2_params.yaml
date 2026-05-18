@@ -173,12 +173,12 @@ local_costmap:
       width: 6
       height: 6
       resolution: 0.2
-      robot_radius: 0.4
+      robot_radius: 0.8
       plugins: ["voxel_layer", "inflation_layer"]
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 3.0
-        inflation_radius: 0.25
+        inflation_radius: 0.8
       voxel_layer:
         plugin: "nav2_costmap_2d::VoxelLayer"
         enabled: True

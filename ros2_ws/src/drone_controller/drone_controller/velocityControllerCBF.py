@@ -39,14 +39,14 @@ class VelocityController(Node):
         self.prev_error_z = 0.0
 
         # CBF parameters
-        max_dist = 15.0
+        max_dist = 1500.0
         safety_buffer = 1
         self.max_dist = max_dist-safety_buffer#Maximum distance from drone to rover
         
         self.alpha = 1.5 #CBF gain (TUNE, ofte mellem 1-3)
 
         ##DRONE HEIGHT
-        self.drone_height = -5.0 #meters
+        self.drone_height = -3.0 #meters
 
         ####### Rover state FOR TESTING PURPOSES, REPLACE WITH REAL SUBSCRIBER##########
         self.rover_pos = [0.0, 0.0, 0.0]  # [x,y,z]
@@ -190,7 +190,7 @@ class VelocityController(Node):
         # Extract position differences
         dx = self.desired_pose.pose.position.x - self.current_pos[0]
         dy = self.desired_pose.pose.position.y - self.current_pos[1]
-        dz = self.drone_height - self.current_pos[2]
+        dz = self.drone_height + self.current_pos[2]
 
         #print dx, dy, dz
         #self.get_logger().info(f"Position error: dx={dx:.2f}, dy={dy:.2f}, dz={dz:.2f}")
@@ -241,7 +241,7 @@ class VelocityController(Node):
         twist_msg = TwistStamped()
         twist_msg.header.stamp = self.get_clock().now().to_msg()
         twist_msg.header.frame_id = "map"
-        twist_msg.twist.linear.x = ux
+        twist_msg.twist.linear.x = -ux
         twist_msg.twist.linear.y = uy
         twist_msg.twist.linear.z = uz
         twist_msg.twist.angular.x = 0.0
