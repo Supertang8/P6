@@ -18,9 +18,11 @@
             xsi:schemaLocation="https://cdds.io/config https://raw.githubusercontent.com/eclipse-cyclonedds/cyclonedds/master/etc/cyclonedds.xsd">
   <Domain id="any">
     <General>
-      <Interfaces>
-        <NetworkInterface autodetermine="true" priority="default" multicast="false"/>
-      </Interfaces>
+      <!-- Interface is pinned per-host via a chained CYCLONEDDS_URI override
+           (~/cyclone_iface.xml on each box). Don't put <Interfaces> here:
+           autodetermine on multi-NIC hosts picks the wrong subnet and
+           SPDP/data unicast goes out with a source IP the peer can't
+           reverse-route, so rp_filter silently drops it. -->
       <AllowMulticast>false</AllowMulticast>
     </General>
 
@@ -35,8 +37,8 @@
     </Discovery>
 
     <Internal>
-      <SocketReceiveBufferSize min="256KiB"/>
-      <SocketSendBufferSize min="256KiB"/>
+      <SocketReceiveBufferSize min="2MB"/>
+      <SocketSendBufferSize min="2MB"/>
     </Internal>
   </Domain>
 </CycloneDDS>
