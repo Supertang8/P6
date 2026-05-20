@@ -34,15 +34,15 @@ def generate_launch_description():
     livox_drone_launch_path = os.path.join(
         get_package_share_directory('livox_ros_driver2'), 'launch', 'msg_MID360_drone_launch.py')
 
-    cyclonedds_uri = 'file://' + os.path.join(
-        get_package_share_directory('mapping_launch'), 'config', 'cyclonedds.xml')
+    #cyclonedds_uri = 'file://' + os.path.join(
+    #    get_package_share_directory('mapping_launch'), 'config', 'cyclonedds.xml')
 
     # ── DDS configuration ─────────────────────────────────────────────────
     # Force CycloneDDS as RMW and point it at the workspace-shared XML so
     # discovery uses unicast peers (drone Pi <-> rover laptop) instead of
     # wifi multicast. Must be set before any node spawns.
-    set_rmw = SetEnvironmentVariable('RMW_IMPLEMENTATION', 'rmw_cyclonedds_cpp')
-    set_cyclone_uri = SetEnvironmentVariable('CYCLONEDDS_URI', cyclonedds_uri)
+    #set_rmw = SetEnvironmentVariable('RMW_IMPLEMENTATION', 'rmw_cyclonedds_cpp')
+    #set_cyclone_uri = SetEnvironmentVariable('CYCLONEDDS_URI', cyclonedds_uri)
 
     # ── arguments ─────────────────────────────────────────────────────────
     use_sim_time = LaunchConfiguration('use_sim_time')
@@ -120,7 +120,7 @@ def generate_launch_description():
             'filter_speckles': True,
             'filter_ground_plane': True,
             'ground_filter.angle': 0.15,
-            'ground_filter.distance': 0.2,
+            'ground_filter.distance': 0.3,
             'ground_filter.plane_distance': 0.2,
             'sensor_model.max_range': 8.0,
             # Bounds in drone/odom. Floor near z=-0.26; widen to absorb
@@ -144,8 +144,8 @@ def generate_launch_description():
     return LaunchDescription([
         # DDS env vars MUST come before any Node/IncludeLaunchDescription so
         # every spawned process inherits CycloneDDS + the unicast peer config.
-        set_rmw,
-        set_cyclone_uri,
+        #set_rmw,
+        #set_cyclone_uri,
 
         declare_use_sim_time_cmd,
 

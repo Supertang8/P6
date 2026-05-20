@@ -39,7 +39,7 @@ class VelocityController(Node):
         self.prev_error_z = 0.0
 
         # CBF parameters
-        max_dist = 1500.0
+        max_dist = 15.0
         safety_buffer = 1
         self.max_dist = max_dist-safety_buffer#Maximum distance from drone to rover
         

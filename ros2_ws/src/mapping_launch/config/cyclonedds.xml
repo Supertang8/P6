@@ -28,6 +28,7 @@
 
     <Discovery>
       <ParticipantIndex>auto</ParticipantIndex>
+      <MaxAutoParticipantIndex>60</MaxAutoParticipantIndex>
       <Peers>
         <Peer address="192.168.0.205"/>  <!-- rover laptop -->
         <Peer address="192.168.0.202"/>  <!-- drone Pi -->
