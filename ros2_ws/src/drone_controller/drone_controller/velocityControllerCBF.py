@@ -39,8 +39,8 @@ class VelocityController(Node):
         self.prev_error_z = 0.0
 
         # CBF parameters
-        max_dist = 15.0
-        safety_buffer = 0.7
+        max_dist = 20.0
+        safety_buffer = 5
         self.max_dist = max_dist-safety_buffer#Maximum distance from drone to rover
         
         self.alpha = 1.5 #CBF gain (TUNE, ofte mellem 1-3)
