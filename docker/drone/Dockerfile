@@ -34,6 +34,7 @@ RUN apt update && \
         ros-humble-xacro \
         libgtsam-dev libgtsam-unstable-dev \
     	ros-humble-pcl-conversions ros-humble-pcl-msgs ros-humble-pcl-ros
+        ros-humble-rmw-cyclonedds-cpp \
  
 #Mavlink communcation
 RUN apt update && \
@@ -61,7 +62,8 @@ RUN rosdep update
 RUN echo "source /opt/ros/humble/setup.bash" >> /root/.bashrc
 RUN echo "source /root/ros2_ws/install/setup.bash" >> /root/.bashrc 
 RUN echo "alias cb='colcon build --packages-select livox_converter calibrate_lidars odom_to_tf_ros2 mapping_launch livox_ros_driver2 px4_msgs px4_ros2_cpp px4_controller drone_controller autorccar_interfaces lio_sam'" >> /root/.bashrc 
-
+RUN echo "export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp" >> /root/.bashrc 
+RUN echo "export CYCLONEDDS_URI="file:///root/cyclone_iface.xml,file:///root/ros2_ws/install/mapping_launch/share/mapping_launch/config/cyclonedds.xml"" >> /root/.bashrc 
 
 # Install Livox SDK
 WORKDIR /root

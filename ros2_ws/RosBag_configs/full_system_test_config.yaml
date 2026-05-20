@@ -1,7 +1,11 @@
-recording:
+output:
+  storage_id: sqlite3
+
+record:
+  all: false
   topics:
-    # Need to have
     - /tf
+    - /tf_static
     - /map
     - /path
     - /plan
@@ -9,10 +13,11 @@ recording:
     - /offboard/setpoint
     - /drone_rover_distance
     - /drone/projected_map
+    - /drone/projected_map_updates
     - /rover/projected_map
-
-    # Nice to have
-    - /rover/cloud_registered
-    - /drone/cloud_registered
-    - /rover/occupancy_grid
-    - /drone/occupancy_grid
+    - /rover/projected_map_updates
+    - /global_costmap/costmap
+    - /global_costmap/costmap_updates
+    - /drone/octomap_binary
+    - /rover/octomap_binary
+  qos_profile_overrides_path: RosBag_configs/full_system_test_qos.yaml

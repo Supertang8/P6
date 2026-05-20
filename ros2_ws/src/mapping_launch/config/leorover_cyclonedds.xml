@@ -1,31 +1,21 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!--
   CycloneDDS configuration:
+  This file is for the Leorover Pi set to static IP 192.168.0.201.
+  It defines the interface address so autodectection doesn't pick the wrong one.
   It defines peer list of who it can talk to using unicast.
-  Make sure robots are set to the correct static IP addresses.
   If you get an error saying 2MB buffer size is not allowed, increase the max buffer size on the host with:
     sudo sysctl -w net.core.rmem_max=8388608
     sudo sysctl -w net.core.wmem_max=8388608
-  This is a shared configuration, so it doesn't define the interface address.
-  The inferface address of each machine should be defined in their respective /root/cyclone_iface.xml file, 
-  which should look like (example for rover computer):
-  
-  <CycloneDDS xmlns="https://cdds.io/config">
-    <Domain id="any">
-      <General>
-        <Interfaces>
-          <NetworkInterface address="192.168.0.205" multicast="false"/>
-        </Interfaces>
-      </General>
-    </Domain>
-  </CycloneDDS>
-
 -->
 <CycloneDDS xmlns="https://cdds.io/config"
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xsi:schemaLocation="https://cdds.io/config https://raw.githubusercontent.com/eclipse-cyclonedds/cyclonedds/master/etc/cyclonedds.xsd">
   <Domain id="any">
     <General>
+      <Interfaces>
+         <NetworkInterface address="192.168.0.201" multicast="false"/>
+      </Interfaces>
       <AllowMulticast>false</AllowMulticast>
     </General>
 

@@ -1,0 +1,41 @@
+/tf_static:
+  history: keep_last
+  depth: 1
+  reliability: reliable
+  durability: transient_local
+
+/map:
+  history: keep_last
+  depth: 1
+  reliability: reliable
+  durability: transient_local
+
+/drone/projected_map:
+  history: keep_last
+  depth: 1
+  reliability: reliable
+  durability: transient_local
+
+/rover/projected_map:
+  history: keep_last
+  depth: 1
+  reliability: reliable
+  durability: transient_local
+
+/global_costmap/costmap:
+  history: keep_last
+  depth: 1
+  reliability: reliable
+  durability: transient_local
+
+/drone/octomap_binary:
+  history: keep_last
+  depth: 1
+  reliability: reliable
+  durability: transient_local
+
+/rover/octomap_binary:
+  history: keep_last
+  depth: 1
+  reliability: reliable
+  durability: transient_local

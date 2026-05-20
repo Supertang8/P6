@@ -32,6 +32,7 @@ setup(
             'tf_namespace_republisher = mapping_launch.tf_namespace_republisher:main',
             'camera_init_tf_from_raw_lidar = mapping_launch.camera_init_tf_from_raw_lidar:main',
             'cloud_world_aligned_republisher = mapping_launch.cloud_world_aligned_republisher:main',
+            'cmd_vel_relay = mapping_launch.cmd_vel_relay:main',
         ],
     },
 )
