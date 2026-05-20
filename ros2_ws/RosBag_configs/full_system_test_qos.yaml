@@ -1,6 +1,6 @@
 /tf_static:
-  history: keep_last
-  depth: 1
+  history: keep_all
+  depth: 0
   reliability: reliable
   durability: transient_local
 
